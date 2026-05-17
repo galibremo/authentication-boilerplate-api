@@ -20,8 +20,9 @@ Sends a one-time sign-in link to the supplied email address.
 
 The email is normalized, an existing verification token for that email is removed, a new hashed
 token is stored, and the raw token is sent by email in a frontend verification link:
-`${APP_URL}/auth/magic-link/verify?email=user@example.com&token=token-value`. The response is
-intentionally generic.
+`${APP_URL}/auth/magic-link/verify?email=user@example.com&token=token-value`. If a safe
+same-origin `redirectUrl` is provided, the verification link also includes it as a `redirect`
+query parameter. The response is intentionally generic.
 
 ### Authentication
 
@@ -37,17 +38,20 @@ JSON body:
 
 ```json
 {
-	"email": "user@example.com"
+	"email": "user@example.com",
+	"redirectUrl": "http://localhost:3030/users"
 }
 ```
 
 ### Optional Parameters
 
-None.
+- `redirectUrl`: optional same-origin frontend URL to visit after successful verification.
 
 ### Validation Rules
 
 - `email` must be a valid email address.
+- `redirectUrl`, when present, must be a string. Unsafe cross-origin values are ignored when
+  building the email link.
 - Unknown body fields are rejected.
 
 ### Successful Response
@@ -85,7 +89,7 @@ None.
 
 ## Verify Magic Link With Redirect
 
-`GET /auth/magic-link/verify?email=user@example.com&token=token-value`
+`GET /auth/magic-link/verify?email=user@example.com&token=token-value&redirect=http%3A%2F%2Flocalhost%3A3030%2Fusers`
 
 ### Purpose
 
@@ -115,12 +119,13 @@ Query parameters:
 
 ### Optional Parameters
 
-None.
+- `redirect`: optional same-origin frontend URL to preserve through the frontend success redirect.
 
 ### Validation Rules
 
 - `email` must be a valid email address.
 - `token` must be a non-empty string.
+- `redirect`, when present, must be a string. Unsafe cross-origin values are ignored.
 - The token must exist, match the email, be unexpired, and be unused.
 
 ### Successful Response
@@ -129,7 +134,8 @@ This route returns a redirect, not JSON.
 
 - Status: `302`
 - Sets `access-token` cookie.
-- Redirects to `${APP_URL}/auth/magic-link/success`.
+- Redirects to `${APP_URL}/auth/magic-link/success`, preserving the safe `redirect` query when
+  present.
 
 ### Error Responses
 
@@ -180,18 +186,21 @@ JSON body:
 ```json
 {
 	"email": "user@example.com",
-	"token": "token-value"
+	"token": "token-value",
+	"redirectUrl": "http://localhost:3030/users"
 }
 ```
 
 ### Optional Parameters
 
-None.
+- `redirectUrl`: optional same-origin frontend URL for frontend clients to preserve while verifying.
 
 ### Validation Rules
 
 - `email` must be a valid email address.
 - `token` must be a non-empty string.
+- `redirectUrl`, when present, must be a string. Unsafe cross-origin values should be ignored by
+  clients and are accepted only as metadata by this endpoint.
 - Unknown body fields are rejected.
 - The token must exist, match the email, be unexpired, and be unused.
 

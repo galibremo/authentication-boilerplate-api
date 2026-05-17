@@ -8,8 +8,8 @@ the existing Google login and JWT/session cookie model.
 ## API Design
 
 - `POST /auth/magic-link/request`
-  - Accepts an email address.
-  - Sends a one-time sign-in link by email.
+  - Accepts an email address and optional same-origin redirect URL.
+  - Sends a one-time sign-in link by email, preserving the safe redirect in the verification URL.
   - Returns a generic success response to avoid account enumeration.
 - `GET /auth/magic-link/verify`
   - Accepts `email` and `token` query parameters.
@@ -38,4 +38,5 @@ the existing Google login and JWT/session cookie model.
 - Expired tokens are rejected and removed.
 - Replayed tokens are rejected after the first successful verification.
 - Mail delivery failures should clean up the pending verification record.
-- Redirect URLs must be environment-driven and not user-controlled.
+- Redirect URLs must be validated against the frontend origin before being included in links or used
+  after verification.

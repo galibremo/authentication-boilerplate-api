@@ -66,7 +66,7 @@ export class AuthService {
 		const token = randomBytes(32).toString('hex');
 		const tokenHash = this.cryptoService.hash(token);
 		const expiresAt = new Date(Date.now() + magicLinkTimeout);
-		const safeRedirectPath = this.resolveSafeMagicLinkRedirectPath(redirectUrl);
+		const safeRedirectUrl = this.resolveSafeMagicLinkRedirectUrl(redirectUrl);
 
 		await this.authRepository.transaction(async tx => {
 			await this.authRepository.deleteVerificationsByIdentifier(normalizedEmail, tx);
@@ -86,9 +86,9 @@ export class AuthService {
 				verificationUrl: this.buildMagicLinkVerificationUrl(
 					normalizedEmail,
 					token,
-					safeRedirectPath,
+					safeRedirectUrl,
 				),
-				redirectUrl: this.buildMagicLinkRedirectUrl(safeRedirectPath),
+				redirectUrl: this.buildMagicLinkRedirectUrl(safeRedirectUrl),
 			});
 		} catch (error) {
 			await this.authRepository.deleteVerificationByIdentifierValue(normalizedEmail, tokenHash);
@@ -98,7 +98,7 @@ export class AuthService {
 	}
 
 	getMagicLinkRedirectUrl(redirectUrl?: string | null): string {
-		return this.buildMagicLinkRedirectUrl(this.resolveSafeMagicLinkRedirectPath(redirectUrl));
+		return this.buildMagicLinkRedirectUrl(this.resolveSafeMagicLinkRedirectUrl(redirectUrl));
 	}
 
 	async verifyMagicLink(
@@ -359,7 +359,7 @@ export class AuthService {
 		return url.toString();
 	}
 
-	private resolveSafeMagicLinkRedirectPath(redirectUrl?: string | null): string | null {
+	private resolveSafeMagicLinkRedirectUrl(redirectUrl?: string | null): string | null {
 		if (!redirectUrl) return null;
 
 		try {
@@ -368,7 +368,7 @@ export class AuthService {
 
 			if (parsed.origin !== appUrl.origin) return null;
 
-			return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+			return parsed.toString();
 		} catch {
 			return null;
 		}
