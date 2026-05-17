@@ -153,7 +153,7 @@ export class AuthSessionRepository {
 		const whereClause = this.getListSessionsWhere(userId, query, now);
 
 		const page = query.page ?? 1;
-		const pageSize = query.pageSize ?? 25;
+		const pageSize = query.pageSize ?? 10;
 		const offset = (page - 1) * pageSize;
 
 		const orderBy = orderByColumn(schema.sessions, query.sort, query.dir);

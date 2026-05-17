@@ -6,9 +6,9 @@ import { notFoundError, unauthorizedError } from '../../core/errors/domain-error
 import { sessionRenewalThreshold, sessionTimeout } from '../../core/helpers/constant.helpers';
 import type { SessionSchemaType } from '../../database/types';
 import type { SessionDataType, SessionListResponse } from './@types/auth.types';
+import { AuthSessionRepository } from './auth-session.repository';
 import { mapSessionResponse } from './auth.mapper';
 import type { SessionListQueryDto } from './auth.schema';
-import { AuthSessionRepository } from './auth-session.repository';
 
 @Injectable()
 export class AuthSession {
@@ -95,10 +95,7 @@ export class AuthSession {
 		sessionId: number,
 		data: Pick<Partial<SessionSchemaType>, 'twoFactorFailedAttempts' | 'twoFactorLockedUntil'>,
 	): Promise<SessionSchemaType> {
-		const session = await this.authSessionRepository.updateTwoFactorFailureState(
-			sessionId,
-			data,
-		);
+		const session = await this.authSessionRepository.updateTwoFactorFailureState(sessionId, data);
 
 		if (!session) throw unauthorizedError('Invalid session token');
 
@@ -124,10 +121,7 @@ export class AuthSession {
 	}
 
 	revokeOtherUserSessions(userId: number, currentSessionToken: string): Promise<number> {
-		return this.authSessionRepository.revokeOtherActiveUserSessions(
-			userId,
-			currentSessionToken,
-		);
+		return this.authSessionRepository.revokeOtherActiveUserSessions(userId, currentSessionToken);
 	}
 
 	revokeAllUserSessions(userId: number): Promise<number> {
@@ -153,7 +147,7 @@ export class AuthSession {
 			rows: result.rows.map(session => mapSessionResponse(session, currentSessionToken)),
 			total: result.total,
 			page: query.page ?? 1,
-			pageSize: query.pageSize ?? 25,
+			pageSize: query.pageSize ?? 10,
 			activeOtherSessionCount: result.activeOtherSessionCount,
 		};
 	}

@@ -1,7 +1,7 @@
 # Auth API
 
-Auth routes live under `/auth`. Successful login-style routes set an `access-token` HTTP-only
-cookie that is later read by the JWT strategy.
+Auth routes live under `/auth`. Successful login-style routes set an `access-token` HTTP-only cookie
+that is later read by the JWT strategy.
 
 Unsafe methods require CSRF protection unless explicitly stated otherwise. Call `GET /csrf` first,
 keep the `csrf-token` cookie, and send the returned token as `x-csrf-token`.
@@ -20,9 +20,9 @@ Sends a one-time sign-in link to the supplied email address.
 
 The email is normalized, an existing verification token for that email is removed, a new hashed
 token is stored, and the raw token is sent by email in a frontend verification link:
-`${APP_URL}/auth/magic-link/verify?email=user@example.com&token=token-value`. If a safe
-same-origin `redirectUrl` is provided, the verification link also includes it as a `redirect`
-query parameter. The response is intentionally generic.
+`${APP_URL}/auth/magic-link/verify?email=user@example.com&token=token-value`. If a safe same-origin
+`redirectUrl` is provided, the verification link also includes it as a `redirect` query parameter.
+The response is intentionally generic.
 
 ### Authentication
 
@@ -561,11 +561,11 @@ Query parameters:
 		],
 		"total": 1,
 		"page": 1,
-		"pageSize": 25,
+		"pageSize": 10,
 		"activeOtherSessionCount": 0
 	},
 	"timestamp": "2026-05-16T00:00:00.000Z",
-	"path": "/auth/sessions?page=1&pageSize=25"
+	"path": "/auth/sessions?page=1&pageSize=10"
 }
 ```
 
@@ -652,7 +652,8 @@ None.
 
 ### Purpose
 
-Revokes all other active sessions for the authenticated user while keeping the current session valid.
+Revokes all other active sessions for the authenticated user while keeping the current session
+valid.
 
 ### How It Works
 

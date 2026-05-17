@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, asc, count, desc, eq, gt, gte, ilike, inArray, lte, or, sql } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gte, ilike, inArray, lte, or, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 import { DATABASE_CONNECTION } from '../../database/connection';
@@ -40,7 +40,7 @@ export class UsersRepository {
 		const now = new Date();
 		const whereClause = this.getListUsersWhere(query);
 		const page = query.page ?? 1;
-		const pageSize = query.pageSize ?? 25;
+		const pageSize = query.pageSize ?? 10;
 		const offset = (page - 1) * pageSize;
 		const activeSessionCount = this.activeSessionCountSql(now);
 		const orderBy = this.getUsersOrderBy(query.sort, query.dir, activeSessionCount);
@@ -162,11 +162,7 @@ export class UsersRepository {
 
 		const q = query.search ? `%${query.search}%` : undefined;
 		const searchExists = q
-			? or(
-					ilike(schema.users.name, q),
-					ilike(schema.users.email, q),
-					ilike(schema.users.phone, q),
-				)
+			? or(ilike(schema.users.name, q), ilike(schema.users.email, q), ilike(schema.users.phone, q))
 			: undefined;
 
 		const conditions = [

@@ -28,14 +28,14 @@ Optional:
 - `emailVerified`: `true` or `false`.
 - `fromDate`: created-at lower bound.
 - `toDate`: created-at upper bound.
-- `sort`: one of `name`, `email`, `emailVerified`, `is2faEnabled`, `role`,
-  `activeSessionCount`, `createdAt`, `updatedAt`.
+- `sort`: one of `name`, `email`, `emailVerified`, `is2faEnabled`, `role`, `activeSessionCount`,
+  `createdAt`, `updatedAt`.
 - `dir`: `asc` or `desc`.
 
 ### Example Request
 
 ```http
-GET /users?page=1&pageSize=25&role=USER,MANAGER&emailVerified=true&sort=createdAt&dir=desc
+GET /users?page=1&pageSize=10&role=USER,MANAGER&emailVerified=true&sort=createdAt&dir=desc
 ```
 
 ### Example Success
@@ -62,7 +62,7 @@ GET /users?page=1&pageSize=25&role=USER,MANAGER&emailVerified=true&sort=createdA
 		],
 		"total": 1,
 		"page": 1,
-		"pageSize": 25
+		"pageSize": 10
 	},
 	"timestamp": "2026-05-17T10:00:00.000Z",
 	"path": "/users"
@@ -211,8 +211,8 @@ Deletes a target user. `:id` is the public user UUID.
 
 ## `POST /users/:id/2fa/reset`
 
-Disables 2FA for a target user and revokes all of their sessions. `:id` is the public user UUID.
-The same conservative management rules apply.
+Disables 2FA for a target user and revokes all of their sessions. `:id` is the public user UUID. The
+same conservative management rules apply.
 
 ### Example Success
 
