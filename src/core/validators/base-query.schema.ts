@@ -5,22 +5,29 @@ import { validateEnum, validatePositiveNumber, validateString } from './common.s
 export type SortableField = { name: string; queryName: string };
 
 export const baseQuerySchema = (sortableFields: readonly SortableField[]) => {
-	const sortByValues = sortableFields.map(field => field.name) as [string, ...string[]];
+	const sortValues = sortableFields.map(field => field.name) as [string, ...string[]];
 
-	const getSortField = (sortBy?: string) => {
-		if (!sortBy) return undefined;
-		return sortableFields.find(field => field.name === sortBy)?.queryName;
+	const getSortField = (sort?: string) => {
+		if (!sort) return undefined;
+		return sortableFields.find(field => field.name === sort)?.queryName;
 	};
 
-	return z.object({
-		page: validatePositiveNumber('Page').optional(),
-		limit: validatePositiveNumber('Limit').max(500, 'Limit must not exceed 500').optional(),
-		sortBy: validateEnum('Sort By', sortByValues)
-			.optional()
-			.transform((val: string | undefined) => getSortField(val)), // Transform directly here
-		sortOrder: validateEnum('Sort Order', ['asc', 'desc']).optional(),
-		search: validateString('Search').optional(),
-		from: validateString('From Date').optional(),
-		to: validateString('To Date').optional(),
-	});
+	return z
+		.object({
+			page: validatePositiveNumber('Page').optional(),
+			pageSize: validatePositiveNumber('Page Size')
+				.max(500, 'Page Size must not exceed 500')
+				.optional(),
+			sort: validateEnum('Sort By', sortValues)
+				.optional()
+				.transform((val: string | undefined) => getSortField(val)), // Transform directly here
+			dir: validateEnum('Sort Order', ['asc', 'desc']).optional(),
+			search: validateString('Search').optional(),
+			fromDate: validateString('From Date').optional(),
+			toDate: validateString('To Date').optional(),
+		})
+		.refine(data => !data.fromDate || !data.toDate || data.fromDate <= data.toDate, {
+			message: 'fromDate must be less than or equal to toDate',
+			path: ['toDate'],
+		});
 };

@@ -404,8 +404,8 @@ Returns the authenticated user's session and device history.
 
 ### How It Works
 
-The JWT guard validates the current `access-token` cookie. The API then lists all session records
-owned by the current user, orders them newest first, computes each session status, and marks the
+The JWT guard validates the current `access-token` cookie. The API filters, searches, sorts, and
+paginates session records owned by the current user, computes each session status, and marks the
 current session by comparing each stored session token to the current cookie value.
 
 ### Authentication
@@ -422,12 +422,25 @@ None.
 
 ### Optional Parameters
 
-None.
+Query parameters:
+
+- `page`: page number. Defaults to `1`.
+- `pageSize`: rows per page. Defaults to `25`, maximum `100`.
+- `search`: matches device name, device type, IP address, or user agent.
+- `status`: comma-separated statuses: `active`, `revoked`, `expired`.
+- `deviceType`: comma-separated device types, for example `desktop,mobile,tablet`.
+- `fromDate`: created/login date lower bound in `YYYY-MM-DD` format.
+- `toDate`: created/login date upper bound in `YYYY-MM-DD` format.
+- `sort`: one of `deviceName`, `deviceType`, `ipAddress`, `userAgent`, `status`, `createdAt`,
+  `expiresAt`. Defaults to `createdAt`.
+- `dir`: `asc` or `desc`. Defaults to `desc`.
 
 ### Validation Rules
 
 - The session must exist, be unrevoked, and be unexpired.
 - Only sessions owned by the current user are returned.
+- `fromDate` must be less than or equal to `toDate` when both are supplied.
+- `status` is computed from `isRevoked` and `expiresAt`.
 - Session tokens, numeric database IDs, and internal user IDs are never returned.
 
 ### Successful Response
@@ -436,24 +449,30 @@ None.
 {
 	"statusCode": 200,
 	"message": "Sessions fetched successfully",
-	"data": [
-		{
-			"id": "7f44294a-3774-4604-9109-f32bc3a6e2c1",
-			"deviceName": "Windows 11 - Chrome",
-			"deviceType": "desktop",
-			"ipAddress": "203.0.113.10",
-			"userAgent": "Chrome - 125.0.0.0",
-			"status": "active",
-			"isCurrent": true,
-			"isRevoked": false,
-			"twoFactorVerified": false,
-			"createdAt": "2026-05-16T00:00:00.000Z",
-			"updatedAt": "2026-05-16T00:00:00.000Z",
-			"expiresAt": "2026-05-23T00:00:00.000Z"
-		}
-	],
+	"data": {
+		"rows": [
+			{
+				"id": "7f44294a-3774-4604-9109-f32bc3a6e2c1",
+				"deviceName": "Windows 11 - Chrome",
+				"deviceType": "desktop",
+				"ipAddress": "203.0.113.10",
+				"userAgent": "Chrome - 125.0.0.0",
+				"status": "active",
+				"isCurrent": true,
+				"isRevoked": false,
+				"twoFactorVerified": false,
+				"createdAt": "2026-05-16T00:00:00.000Z",
+				"updatedAt": "2026-05-16T00:00:00.000Z",
+				"expiresAt": "2026-05-23T00:00:00.000Z"
+			}
+		],
+		"total": 1,
+		"page": 1,
+		"pageSize": 25,
+		"activeOtherSessionCount": 0
+	},
 	"timestamp": "2026-05-16T00:00:00.000Z",
-	"path": "/auth/sessions"
+	"path": "/auth/sessions?page=1&pageSize=25"
 }
 ```
 
@@ -461,6 +480,7 @@ None.
 
 - `401 unauthorized` when the current session token is missing, invalid, revoked, expired, or
   blocked by pending 2FA.
+- `422 validation_failed` when query parameters fail validation.
 
 ## Revoke Session
 

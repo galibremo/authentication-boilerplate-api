@@ -31,6 +31,7 @@ import { ZodValidationPipe } from '../../core/pipes/zod-validation.pipe';
 import { EnvType } from '../../core/validators/env';
 import { FILE_SIZE_LIMIT, singleFileSchema, ZodFileValidationPipe } from '../media/media.pipe';
 import type {
+	SessionListResponse,
 	SessionResponse,
 	UserWithoutPassword,
 	UserWithoutPasswordResponse,
@@ -44,6 +45,8 @@ import {
 	magicLinkRequestSchema,
 	type MagicLinkVerifyDto,
 	magicLinkVerifySchema,
+	type SessionListQueryDto,
+	sessionListQuerySchema,
 	type UpdateProfileDto,
 	updateProfileSchema,
 } from './auth.schema';
@@ -153,16 +156,16 @@ export class AuthController {
 	@Get('sessions')
 	async getSessions(
 		@CurrentUser() user: UserWithoutPassword,
+		@Query(new ZodValidationPipe(sessionListQuerySchema)) query: SessionListQueryDto,
 		@Request() request: ExpressRequest,
-	): Promise<ApiResponse<SessionResponse[]>> {
+	): Promise<ApiResponse<SessionListResponse>> {
 		const sessionToken = request.cookies['access-token'] as string | undefined;
-		const sessions = await this.authSession.listOfUserSessions(user.id);
 
-		return createApiResponse(
-			HttpStatus.OK,
-			'Sessions fetched successfully',
-			sessions.map(session => mapSessionResponse(session, sessionToken)),
-		);
+		if (!sessionToken) throw badRequestError('No active session found');
+
+		const sessions = await this.authSession.listUserSessions(user.id, query, sessionToken);
+
+		return createApiResponse(HttpStatus.OK, 'Sessions fetched successfully', sessions);
 	}
 
 	@UseGuards(JwtAuthGuard)

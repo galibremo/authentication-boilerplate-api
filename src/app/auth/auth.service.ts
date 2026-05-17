@@ -12,38 +12,19 @@ import { EnvType } from '../../core/validators/env';
 import { CryptoService } from '../../crypto/crypto.service';
 import type { UserSchemaType } from '../../database/types';
 import { CloudinaryImageService } from '../media/services/cloudinary.service';
-import type { CreateUser, UserWithoutPassword } from './@types/auth.types';
+import type {
+	CreateUser,
+	MagicLinkSessionInfo,
+	UserInformation,
+	UserWithoutPassword,
+	VerifiedGoogleProfile,
+} from './@types/auth.types';
 import { stripUserPassword } from './auth.mapper';
 import { AUTH_CLOUDINARY_SERVICE } from './auth.providers';
 import { AuthRepository, type AuthDbClient } from './auth.repository';
 import type { LoginDto, UpdateProfileDto } from './auth.schema';
 import { AuthSession } from './auth.session';
 import { MagicLinkEmailService } from './services/magic-link-email.service';
-
-interface UserInformation {
-	userId: number;
-	email: string;
-	userAgent: string;
-	ipAddress: string;
-	deviceName: string;
-	deviceType: string;
-	expirationTime?: number;
-}
-
-interface MagicLinkSessionInfo {
-	userAgent: string;
-	ipAddress: string;
-	deviceName: string;
-	deviceType: string;
-}
-
-export interface VerifiedGoogleProfile {
-	email: string;
-	name: string | null;
-	picture: string | null;
-	googleId: string;
-	emailVerified: boolean;
-}
 
 @Injectable()
 export class AuthService {

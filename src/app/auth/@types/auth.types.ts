@@ -19,13 +19,20 @@ export type UserWithoutPasswordResponse = Omit<UserSchemaType, 'id' | 'publicId'
 
 export type SessionStatus = 'active' | 'revoked' | 'expired';
 
+export type SessionSortKey =
+	| 'deviceName'
+	| 'deviceType'
+	| 'ipAddress'
+	| 'userAgent'
+	| 'status'
+	| 'createdAt'
+	| 'expiresAt';
+
+export type SessionSortDirection = 'asc' | 'desc';
+
 export type SessionResponse = Pick<
 	SessionSchemaType,
-	| 'isRevoked'
-	| 'twoFactorVerified'
-	| 'createdAt'
-	| 'updatedAt'
-	| 'expiresAt'
+	'isRevoked' | 'twoFactorVerified' | 'createdAt' | 'updatedAt' | 'expiresAt'
 > & {
 	id: string;
 	deviceName: string;
@@ -35,3 +42,36 @@ export type SessionResponse = Pick<
 	status: SessionStatus;
 	isCurrent: boolean;
 };
+
+export interface SessionListResponse {
+	rows: SessionResponse[];
+	total: number;
+	page: number;
+	pageSize: number;
+	activeOtherSessionCount: number;
+}
+
+export interface UserInformation {
+	userId: number;
+	email: string;
+	userAgent: string;
+	ipAddress: string;
+	deviceName: string;
+	deviceType: string;
+	expirationTime?: number;
+}
+
+export interface MagicLinkSessionInfo {
+	userAgent: string;
+	ipAddress: string;
+	deviceName: string;
+	deviceType: string;
+}
+
+export interface VerifiedGoogleProfile {
+	email: string;
+	name: string | null;
+	picture: string | null;
+	googleId: string;
+	emailVerified: boolean;
+}

@@ -5,7 +5,9 @@ import { UAParser } from 'ua-parser-js';
 import { notFoundError, unauthorizedError } from '../../core/errors/domain-error';
 import { sessionRenewalThreshold, sessionTimeout } from '../../core/helpers/constant.helpers';
 import type { SessionSchemaType } from '../../database/types';
-import type { SessionDataType } from './@types/auth.types';
+import type { SessionDataType, SessionListResponse } from './@types/auth.types';
+import { mapSessionResponse } from './auth.mapper';
+import type { SessionListQueryDto } from './auth.schema';
 import { AuthSessionRepository } from './auth-session.repository';
 
 @Injectable()
@@ -112,5 +114,25 @@ export class AuthSession {
 
 	listOfUserSessions(userId: number): Promise<SessionSchemaType[]> {
 		return this.authSessionRepository.listUserSessions(userId);
+	}
+
+	async listUserSessions(
+		userId: number,
+		query: SessionListQueryDto,
+		currentSessionToken: string,
+	): Promise<SessionListResponse> {
+		const result = await this.authSessionRepository.listUserSessionsPaginated(
+			userId,
+			query,
+			currentSessionToken,
+		);
+
+		return {
+			rows: result.rows.map(session => mapSessionResponse(session, currentSessionToken)),
+			total: result.total,
+			page: query.page ?? 1,
+			pageSize: query.pageSize ?? 25,
+			activeOtherSessionCount: result.activeOtherSessionCount,
+		};
 	}
 }
