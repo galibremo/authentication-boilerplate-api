@@ -83,6 +83,28 @@ export class AuthSession {
 		return session;
 	}
 
+	async markTwoFactorVerified(sessionId: number): Promise<SessionSchemaType> {
+		const session = await this.authSessionRepository.markTwoFactorVerified(sessionId);
+
+		if (!session) throw unauthorizedError('Invalid session token');
+
+		return session;
+	}
+
+	async updateTwoFactorFailureState(
+		sessionId: number,
+		data: Pick<Partial<SessionSchemaType>, 'twoFactorFailedAttempts' | 'twoFactorLockedUntil'>,
+	): Promise<SessionSchemaType> {
+		const session = await this.authSessionRepository.updateTwoFactorFailureState(
+			sessionId,
+			data,
+		);
+
+		if (!session) throw unauthorizedError('Invalid session token');
+
+		return session;
+	}
+
 	async revokeSession(userId: number, sessionKeyOrId: string | number): Promise<boolean> {
 		await this.validateSession(userId, sessionKeyOrId);
 		await this.authSessionRepository.revokeSession(userId, sessionKeyOrId);

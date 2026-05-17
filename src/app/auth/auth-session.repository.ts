@@ -56,6 +56,31 @@ export class AuthSessionRepository {
 			.then(rows => rows[0]);
 	}
 
+	async markTwoFactorVerified(sessionId: number): Promise<SessionSchemaType | undefined> {
+		return this.db
+			.update(schema.sessions)
+			.set({
+				twoFactorVerified: true,
+				twoFactorFailedAttempts: 0,
+				twoFactorLockedUntil: null,
+			})
+			.where(eq(schema.sessions.id, sessionId))
+			.returning()
+			.then(rows => rows[0]);
+	}
+
+	async updateTwoFactorFailureState(
+		sessionId: number,
+		data: Pick<Partial<SessionSchemaType>, 'twoFactorFailedAttempts' | 'twoFactorLockedUntil'>,
+	): Promise<SessionSchemaType | undefined> {
+		return this.db
+			.update(schema.sessions)
+			.set(data)
+			.where(eq(schema.sessions.id, sessionId))
+			.returning()
+			.then(rows => rows[0]);
+	}
+
 	async revokeSession(userId: number, sessionKeyOrId: string | number): Promise<void> {
 		await this.db
 			.update(schema.sessions)

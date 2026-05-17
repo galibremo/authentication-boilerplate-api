@@ -3,9 +3,11 @@ import * as bcrypt from 'bcryptjs';
 
 import { conflictError, isDatabaseUniqueViolation, notFoundError } from '../../core/errors/domain-error';
 import type { UserWithoutPassword } from '../auth/@types/auth.types';
+import { AuthTwoFactorService } from '../auth/auth-two-factor.service';
 import type {
 	DeleteUserResponse,
 	RevokeUserSessionsResponse,
+	ResetUserTwoFactorResponse,
 	UserListResponse,
 	UserManagementResponse,
 } from './@types/users.types';
@@ -21,7 +23,10 @@ import type {
 
 @Injectable()
 export class UsersService {
-	constructor(private readonly usersRepository: UsersRepository) {}
+	constructor(
+		private readonly usersRepository: UsersRepository,
+		private readonly authTwoFactorService: AuthTwoFactorService,
+	) {}
 
 	async listUsers(query: UsersListQueryDto): Promise<UserListResponse> {
 		const users = await this.usersRepository.listUsers(query);
@@ -50,7 +55,6 @@ export class UsersService {
 				password,
 				phone: data.phone ?? null,
 				emailVerified: data.emailVerified ?? false,
-				is2faEnabled: data.is2faEnabled ?? false,
 				role: data.role,
 			});
 
@@ -82,7 +86,6 @@ export class UsersService {
 				...(data.email ? { email: data.email } : {}),
 				...(Object.prototype.hasOwnProperty.call(data, 'phone') ? { phone: data.phone ?? null } : {}),
 				...(typeof data.emailVerified === 'boolean' ? { emailVerified: data.emailVerified } : {}),
-				...(typeof data.is2faEnabled === 'boolean' ? { is2faEnabled: data.is2faEnabled } : {}),
 			});
 
 			return this.getManagementResponse(targetUser.id);
@@ -134,6 +137,17 @@ export class UsersService {
 		const revokedCount = await this.usersRepository.revokeAllUserSessions(targetUser.id);
 
 		return { revokedCount };
+	}
+
+	async resetUserTwoFactor(
+		currentUser: UserWithoutPassword,
+		publicId: string,
+	): Promise<ResetUserTwoFactorResponse> {
+		const targetUser = await this.getTargetUser(publicId);
+
+		UsersPolicy.assertCanManageUser(currentUser, targetUser);
+
+		return this.authTwoFactorService.resetUserTwoFactor(targetUser.id);
 	}
 
 	private async getTargetUser(publicId: string) {

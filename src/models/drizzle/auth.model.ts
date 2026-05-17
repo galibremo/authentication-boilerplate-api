@@ -29,6 +29,7 @@ export const users = pgTable(
 		imageInformation: jsonb('image_information').$type<UploadApiResponse>(),
 		phone: varchar('phone', { length: 20 }),
 		is2faEnabled: boolean('is_2fa_enabled').default(false).notNull(),
+		twoFactorSecretEncrypted: text('two_factor_secret_encrypted'),
 		role: roleTypeEnum('role').default('USER').notNull(),
 		...timestamps,
 	},
@@ -54,6 +55,8 @@ export const sessions = pgTable(
 		deviceName: varchar('device_name', { length: 255 }).default('Unknown Device'),
 		deviceType: varchar('device_type', { length: 50 }).default('Unknown'),
 		twoFactorVerified: boolean('two_factor_verified').default(false).notNull(),
+		twoFactorFailedAttempts: integer('two_factor_failed_attempts').default(0).notNull(),
+		twoFactorLockedUntil: timestamp('two_factor_locked_until'),
 		userId: integer('user_id')
 			.notNull()
 			.references(() => users.id, { onDelete: 'cascade' }),
@@ -69,6 +72,48 @@ export const sessions = pgTable(
 		index('sessions_is_revoked_idx').on(table.isRevoked),
 		index('sessions_user_id_is_revoked_idx').on(table.userId, table.isRevoked),
 		index('sessions_user_id_expires_at_idx').on(table.userId, table.expiresAt),
+	],
+);
+
+export const twoFactorSetups = pgTable(
+	'two_factor_setups',
+	{
+		id: serial('id').primaryKey(),
+		publicId: uuid('public_id').defaultRandom().notNull().unique(),
+		userId: integer('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		secretEncrypted: text('secret_encrypted').notNull(),
+		expiresAt: timestamp('expires_at').notNull(),
+		...timestamps,
+	},
+	table => [
+		uniqueIndex('two_factor_setups_public_id_idx').on(table.publicId),
+		uniqueIndex('two_factor_setups_user_id_idx').on(table.userId),
+		index('two_factor_setups_expires_at_idx').on(table.expiresAt),
+	],
+);
+
+export const twoFactorRecoveryCodes = pgTable(
+	'two_factor_recovery_codes',
+	{
+		id: serial('id').primaryKey(),
+		publicId: uuid('public_id').defaultRandom().notNull().unique(),
+		userId: integer('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		codeHash: text('code_hash').notNull(),
+		usedAt: timestamp('used_at'),
+		...timestamps,
+	},
+	table => [
+		uniqueIndex('two_factor_recovery_codes_public_id_idx').on(table.publicId),
+		uniqueIndex('two_factor_recovery_codes_user_code_hash_idx').on(
+			table.userId,
+			table.codeHash,
+		),
+		index('two_factor_recovery_codes_user_id_idx').on(table.userId),
+		index('two_factor_recovery_codes_used_at_idx').on(table.usedAt),
 	],
 );
 

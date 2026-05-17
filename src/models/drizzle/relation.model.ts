@@ -1,10 +1,12 @@
 import { relations } from 'drizzle-orm';
 
-import { accounts, sessions, users } from './auth.model';
+import { accounts, sessions, twoFactorRecoveryCodes, twoFactorSetups, users } from './auth.model';
 
 export const usersRelations = relations(users, ({ many }) => ({
 	accounts: many(accounts),
 	sessions: many(sessions),
+	twoFactorSetups: many(twoFactorSetups),
+	twoFactorRecoveryCodes: many(twoFactorRecoveryCodes),
 }));
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
@@ -20,3 +22,20 @@ export const accountsRelations = relations(accounts, ({ one }) => ({
 		references: [users.id],
 	}),
 }));
+
+export const twoFactorSetupsRelations = relations(twoFactorSetups, ({ one }) => ({
+	user: one(users, {
+		fields: [twoFactorSetups.userId],
+		references: [users.id],
+	}),
+}));
+
+export const twoFactorRecoveryCodesRelations = relations(
+	twoFactorRecoveryCodes,
+	({ one }) => ({
+		user: one(users, {
+			fields: [twoFactorRecoveryCodes.userId],
+			references: [users.id],
+		}),
+	}),
+);

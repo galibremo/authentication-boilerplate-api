@@ -1,6 +1,5 @@
 import z from 'zod';
 import {
-	validateBoolean,
 	validateEmail,
 	validateEnum,
 	validatePassword,
@@ -72,7 +71,12 @@ export const updateProfileSchema = z
 		name: validateString('Name').optional(),
 		image: validateString('Image').optional(),
 		phone: validatePhoneNumber('Phone').optional(),
-		is2faEnabled: validateBoolean('is2faEnabled').optional(),
+	})
+	.strict();
+
+export const twoFactorCodeSchema = z
+	.object({
+		code: validateString('Two-factor code', { min: 6, max: 32 }),
 	})
 	.strict();
 
@@ -105,3 +109,4 @@ export type MagicLinkVerifyDto = z.infer<typeof magicLinkVerifySchema>;
 export type RegisterDto = z.infer<typeof registerSchema>;
 export type UpdateProfileDto = z.infer<typeof updateProfileSchema>;
 export type SessionListQueryDto = z.infer<typeof sessionListQuerySchema>;
+export type TwoFactorCodeDto = z.infer<typeof twoFactorCodeSchema>;

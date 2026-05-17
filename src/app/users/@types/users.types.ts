@@ -50,3 +50,8 @@ export interface DeleteUserResponse {
 export interface RevokeUserSessionsResponse {
 	revokedCount: number;
 }
+
+export interface ResetUserTwoFactorResponse {
+	reset: boolean;
+	revokedCount: number;
+}

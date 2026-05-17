@@ -33,6 +33,11 @@ import { FILE_SIZE_LIMIT, singleFileSchema, ZodFileValidationPipe } from '../med
 import type {
 	SessionListResponse,
 	SessionResponse,
+	TwoFactorDisableResponse,
+	TwoFactorRecoveryCodesResponse,
+	TwoFactorSetupStartResponse,
+	TwoFactorStatusResponse,
+	TwoFactorVerifyResponse,
 	UserWithoutPassword,
 	UserWithoutPasswordResponse,
 } from './@types/auth.types';
@@ -47,17 +52,23 @@ import {
 	magicLinkVerifySchema,
 	type SessionListQueryDto,
 	sessionListQuerySchema,
+	type TwoFactorCodeDto,
+	twoFactorCodeSchema,
 	type UpdateProfileDto,
 	updateProfileSchema,
 } from './auth.schema';
 import { AuthService } from './auth.service';
 import { AuthSession } from './auth.session';
+import { AuthTwoFactorService } from './auth-two-factor.service';
+import { PartialJwtAuthGuard } from './partial-jwt-auth.guard';
+import type { PartialAuthRequest } from './strategies/jwt-partial.strategy';
 
 @Controller('auth')
 export class AuthController {
 	constructor(
 		private readonly authService: AuthService,
 		private readonly authSession: AuthSession,
+		private readonly authTwoFactorService: AuthTwoFactorService,
 		private readonly configService: ConfigService<EnvType, true>,
 	) {}
 
@@ -118,7 +129,7 @@ export class AuthController {
 		);
 	}
 
-	@UseGuards(JwtAuthGuard)
+	@UseGuards(PartialJwtAuthGuard)
 	@Post('logout')
 	@HttpCode(HttpStatus.OK)
 	async logout(@Request() request: ExpressRequest): Promise<ApiResponse<null>> {
@@ -135,6 +146,100 @@ export class AuthController {
 		);
 
 		return createApiResponse(HttpStatus.OK, 'Logout successful', null);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Get('2fa/status')
+	async getTwoFactorStatus(
+		@CurrentUser() user: UserWithoutPassword,
+	): Promise<ApiResponse<TwoFactorStatusResponse>> {
+		const status = await this.authTwoFactorService.getStatus(user);
+
+		return createApiResponse(HttpStatus.OK, 'Two-factor status fetched successfully', status);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Post('2fa/setup/start')
+	@HttpCode(HttpStatus.OK)
+	async startTwoFactorSetup(
+		@CurrentUser() user: UserWithoutPassword,
+	): Promise<ApiResponse<TwoFactorSetupStartResponse>> {
+		const setup = await this.authTwoFactorService.startSetup(user);
+
+		return createApiResponse(HttpStatus.OK, 'Two-factor setup started successfully', setup);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Post('2fa/setup/confirm')
+	@HttpCode(HttpStatus.OK)
+	async confirmTwoFactorSetup(
+		@CurrentUser() user: UserWithoutPassword,
+		@Request() request: ExpressRequest,
+		@Body(new ZodValidationPipe(twoFactorCodeSchema)) body: TwoFactorCodeDto,
+	): Promise<ApiResponse<TwoFactorRecoveryCodesResponse>> {
+		const session = await this.getCurrentSession(user, request);
+		const result = await this.authTwoFactorService.confirmSetup(user, session, body.code);
+
+		return createApiResponse(HttpStatus.OK, 'Two-factor setup confirmed successfully', result);
+	}
+
+	@UseGuards(PartialJwtAuthGuard)
+	@Post('2fa/verify')
+	@HttpCode(HttpStatus.OK)
+	async verifyTwoFactor(
+		@CurrentUser() user: UserWithoutPassword,
+		@Request() request: PartialAuthRequest,
+		@Body(new ZodValidationPipe(twoFactorCodeSchema)) body: TwoFactorCodeDto,
+	): Promise<ApiResponse<TwoFactorVerifyResponse>> {
+		const result = await this.authTwoFactorService.verifyTwoFactor(
+			user,
+			this.getPartialAuthSession(request),
+			body.code,
+		);
+
+		return createApiResponse(HttpStatus.OK, 'Two-factor verified successfully', result);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Post('2fa/disable')
+	@HttpCode(HttpStatus.OK)
+	async disableTwoFactor(
+		@CurrentUser() user: UserWithoutPassword,
+		@Request() request: ExpressRequest,
+		@Body(new ZodValidationPipe(twoFactorCodeSchema)) body: TwoFactorCodeDto,
+	): Promise<ApiResponse<TwoFactorDisableResponse>> {
+		const sessionToken = this.getSessionToken(request);
+		const session = await this.authSession.validateSession(user.id, sessionToken);
+		const result = await this.authTwoFactorService.disableTwoFactor(
+			user,
+			session,
+			sessionToken,
+			body.code,
+		);
+
+		return createApiResponse(HttpStatus.OK, 'Two-factor disabled successfully', result);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Post('2fa/recovery-codes/regenerate')
+	@HttpCode(HttpStatus.OK)
+	async regenerateTwoFactorRecoveryCodes(
+		@CurrentUser() user: UserWithoutPassword,
+		@Request() request: ExpressRequest,
+		@Body(new ZodValidationPipe(twoFactorCodeSchema)) body: TwoFactorCodeDto,
+	): Promise<ApiResponse<TwoFactorRecoveryCodesResponse>> {
+		const session = await this.getCurrentSession(user, request);
+		const result = await this.authTwoFactorService.regenerateRecoveryCodes(
+			user,
+			session,
+			body.code,
+		);
+
+		return createApiResponse(
+			HttpStatus.OK,
+			'Two-factor recovery codes regenerated successfully',
+			result,
+		);
 	}
 
 	@UseGuards(JwtAuthGuard)
@@ -275,5 +380,23 @@ export class AuthController {
 		);
 
 		return createApiResponse(HttpStatus.OK, 'Google login successful', mapUserResponse(user));
+	}
+
+	private getSessionToken(request: ExpressRequest): string {
+		const sessionToken = request.cookies['access-token'] as string | undefined;
+
+		if (!sessionToken) throw badRequestError('No active session found');
+
+		return sessionToken;
+	}
+
+	private getCurrentSession(user: UserWithoutPassword, request: ExpressRequest) {
+		return this.authSession.validateSession(user.id, this.getSessionToken(request));
+	}
+
+	private getPartialAuthSession(request: PartialAuthRequest) {
+		if (!request.authSession) throw badRequestError('No active session found');
+
+		return request.authSession;
 	}
 }

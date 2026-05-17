@@ -23,6 +23,7 @@ import { JwtAuthGuard } from '../auth/auth.guard';
 import type {
 	DeleteUserResponse,
 	RevokeUserSessionsResponse,
+	ResetUserTwoFactorResponse,
 	UserListResponse,
 	UserManagementResponse,
 } from './@types/users.types';
@@ -104,5 +105,16 @@ export class UsersController {
 		const result = await this.usersService.revokeUserSessions(currentUser, id);
 
 		return createApiResponse(HttpStatus.OK, 'User sessions revoked successfully', result);
+	}
+
+	@Post(':id/2fa/reset')
+	@HttpCode(HttpStatus.OK)
+	async resetUserTwoFactor(
+		@CurrentUser() currentUser: UserWithoutPassword,
+		@Param('id', ParseUUIDPipe) id: string,
+	): Promise<ApiResponse<ResetUserTwoFactorResponse>> {
+		const result = await this.usersService.resetUserTwoFactor(currentUser, id);
+
+		return createApiResponse(HttpStatus.OK, 'User two-factor authentication reset successfully', result);
 	}
 }

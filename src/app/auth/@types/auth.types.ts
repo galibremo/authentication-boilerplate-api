@@ -1,21 +1,34 @@
 import { SessionSchemaType, UserSchemaType } from '../../../database/types';
 
-export type UserWithoutPassword = Omit<UserSchemaType, 'password'>;
+export type UserWithoutPassword = Omit<UserSchemaType, 'password' | 'twoFactorSecretEncrypted'>;
 
 export type CreateUser = Omit<
 	UserSchemaType,
-	'id' | 'publicId' | 'is2faEnabled' | 'createdAt' | 'updatedAt'
+	| 'id'
+	| 'publicId'
+	| 'is2faEnabled'
+	| 'twoFactorSecretEncrypted'
+	| 'createdAt'
+	| 'updatedAt'
 >;
 
 export type SessionDataType = Omit<
 	SessionSchemaType,
-	'id' | 'publicId' | 'twoFactorVerified' | 'isRevoked' | 'createdAt' | 'updatedAt'
+	| 'id'
+	| 'publicId'
+	| 'twoFactorVerified'
+	| 'twoFactorFailedAttempts'
+	| 'twoFactorLockedUntil'
+	| 'isRevoked'
+	| 'createdAt'
+	| 'updatedAt'
 >;
 
 // Api Response Types
-export type UserWithoutPasswordResponse = Omit<UserSchemaType, 'id' | 'publicId' | 'password'> & {
-	id: string;
-};
+export type UserWithoutPasswordResponse = Omit<
+	UserSchemaType,
+	'id' | 'publicId' | 'password' | 'twoFactorSecretEncrypted'
+> & { id: string };
 
 export type SessionStatus = 'active' | 'revoked' | 'expired';
 
@@ -49,6 +62,31 @@ export interface SessionListResponse {
 	page: number;
 	pageSize: number;
 	activeOtherSessionCount: number;
+}
+
+export interface TwoFactorStatusResponse {
+	enabled: boolean;
+	recoveryCodeCount: number;
+}
+
+export interface TwoFactorSetupStartResponse {
+	otpauthUrl: string;
+	qrCodeDataUrl: string;
+	manualEntryKey: string;
+	expiresAt: Date;
+}
+
+export interface TwoFactorRecoveryCodesResponse {
+	recoveryCodes: string[];
+}
+
+export interface TwoFactorVerifyResponse {
+	verified: boolean;
+}
+
+export interface TwoFactorDisableResponse {
+	disabled: boolean;
+	revokedOtherSessionCount: number;
 }
 
 export interface UserInformation {

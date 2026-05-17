@@ -7,8 +7,9 @@ import type {
 } from './@types/auth.types';
 
 export function stripUserPassword(user: UserSchemaType): UserWithoutPassword {
-	const { password, ...userWithoutPassword } = user;
+	const { password, twoFactorSecretEncrypted, ...userWithoutPassword } = user;
 	void password;
+	void twoFactorSecretEncrypted;
 
 	return userWithoutPassword;
 }

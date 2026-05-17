@@ -12,7 +12,10 @@ import { AuthRepository } from './auth.repository';
 import { AuthService } from './auth.service';
 import { AuthSessionRepository } from './auth-session.repository';
 import { AuthSession } from './auth.session';
+import { AuthTwoFactorRepository } from './auth-two-factor.repository';
+import { AuthTwoFactorService } from './auth-two-factor.service';
 import { MagicLinkEmailService } from './services/magic-link-email.service';
+import { JwtPartialStrategy } from './strategies/jwt-partial.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
@@ -32,12 +35,15 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 		AuthService,
 		AuthRepository,
 		JwtStrategy,
+		JwtPartialStrategy,
 		AuthSession,
 		AuthSessionRepository,
+		AuthTwoFactorService,
+		AuthTwoFactorRepository,
 		MagicLinkEmailService,
 		authCloudinaryProvider,
 	],
 	controllers: [AuthController],
-	exports: [AuthService, AUTH_CLOUDINARY_SERVICE],
+	exports: [AuthService, AuthTwoFactorService, AUTH_CLOUDINARY_SERVICE],
 })
 export class AuthModule {}

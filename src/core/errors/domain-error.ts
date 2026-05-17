@@ -29,6 +29,9 @@ export const badRequestError = (message: string, meta?: DomainErrorMeta): Domain
 export const unauthorizedError = (message: string, meta?: DomainErrorMeta): DomainError =>
 	new DomainError('unauthorized', message, HttpStatus.UNAUTHORIZED, meta);
 
+export const twoFactorRequiredError = (message: string, meta?: DomainErrorMeta): DomainError =>
+	new DomainError('two_factor_required', message, HttpStatus.UNAUTHORIZED, meta);
+
 export const badGatewayError = (
 	code: string,
 	message: string,

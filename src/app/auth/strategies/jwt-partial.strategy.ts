@@ -4,10 +4,11 @@ import { PassportStrategy } from '@nestjs/passport';
 import type { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
-import { twoFactorRequiredError, unauthorizedError } from '../../../core/errors/domain-error';
+import { unauthorizedError } from '../../../core/errors/domain-error';
 import AppHelpers from '../../../core/helpers/app.helpers';
 import { EnvType } from '../../../core/validators/env';
 import { CryptoService } from '../../../crypto/crypto.service';
+import type { SessionSchemaType } from '../../../database/types';
 import { AuthService } from '../auth.service';
 import { AuthSession } from '../auth.session';
 
@@ -16,8 +17,12 @@ interface JwtPayload {
 	email: string;
 }
 
+export type PartialAuthRequest = Request & {
+	authSession?: SessionSchemaType;
+};
+
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
+export class JwtPartialStrategy extends PassportStrategy(Strategy, 'jwt-partial') {
 	constructor(
 		private readonly configService: ConfigService<EnvType, true>,
 		private readonly authService: AuthService,
@@ -30,35 +35,26 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 					return request?.cookies?.['access-token'] as string | null;
 				},
 			]),
-			// Session validity is enforced from the database so active users can keep their session alive.
 			ignoreExpiration: true,
 			secretOrKey: configService.get('AUTH_SECRET', { infer: true }),
 			passReqToCallback: true,
 		});
 	}
 
-	async validate(request: Request, payload: JwtPayload): Promise<Express.User> {
-		// Access the JWT token from the request
+	async validate(request: PartialAuthRequest, payload: JwtPayload): Promise<Express.User> {
 		const jwtToken = request.cookies?.['access-token'] as string;
 
 		if (!jwtToken) throw unauthorizedError('Unauthorized');
 
-		// Decrypt the user ID
 		const decryptedUserId = this.cryptoService.decrypt(payload.sub.toString());
 		payload.sub = parseInt(decryptedUserId, 10);
 
-		// Fetch full user from database using AuthService
 		const user = await this.authService.findUserById(payload.sub);
 
 		if (!user.emailVerified) throw unauthorizedError('Email not verified');
 
-		// Check if the user session is valid
 		const session = await this.authSession.validateSession(user.id, jwtToken);
-
-		// If user has 2FA enabled, verify the session has completed 2FA
-		if (user.is2faEnabled && !session.twoFactorVerified) {
-			throw twoFactorRequiredError('Please complete 2FA verification to access this resource.');
-		}
+		request.authSession = session;
 
 		if (this.authSession.shouldExtendSession(session)) {
 			await this.authSession.extendSession(session.id);

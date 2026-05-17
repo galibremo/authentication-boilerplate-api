@@ -1,7 +1,6 @@
 import { z } from 'zod';
 
 import {
-	validateBoolean,
 	validateEmail,
 	validateEnum,
 	validatePassword,
@@ -91,8 +90,7 @@ export const createUserSchema = z
 		email: validateEmail.transform(value => value.toLowerCase()),
 		password: optionalNullablePassword,
 		phone: optionalNullablePhone,
-		emailVerified: validateBoolean('Email Verified').optional(),
-		is2faEnabled: validateBoolean('Two-factor Authentication').optional(),
+		emailVerified: z.boolean({ error: 'Email Verified is required' }).optional(),
 		role: validateEnum('Role', userRoleValues),
 	})
 	.strict();
@@ -102,8 +100,7 @@ export const updateUserSchema = z
 		name: optionalNullableString('Name'),
 		email: validateEmail.transform(value => value.toLowerCase()).optional(),
 		phone: optionalNullablePhone,
-		emailVerified: validateBoolean('Email Verified').optional(),
-		is2faEnabled: validateBoolean('Two-factor Authentication').optional(),
+		emailVerified: z.boolean({ error: 'Email Verified is required' }).optional(),
 	})
 	.strict()
 	.refine(data => Object.keys(data).length > 0, {

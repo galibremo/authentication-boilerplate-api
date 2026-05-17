@@ -178,7 +178,7 @@ export class AuthService {
 		return !!user;
 	}
 
-	async validateUser(data: LoginDto): Promise<Omit<UserSchemaType, 'password'>> {
+	async validateUser(data: LoginDto): Promise<UserWithoutPassword> {
 		const user = await this.authRepository.findUserByEmail(data.email);
 
 		if (!user) throw badRequestError('User with this email does not exist');

@@ -249,6 +249,89 @@ JSON body:
 }
 ```
 
+## Two-Factor Authentication
+
+Two-factor routes live under `/auth/2fa`. Unsafe methods require CSRF.
+
+### `GET /auth/2fa/status`
+
+Requires a fully authenticated session. Returns whether 2FA is enabled and the number of unused
+recovery codes.
+
+```json
+{
+	"enabled": true,
+	"recoveryCodeCount": 8
+}
+```
+
+### `POST /auth/2fa/setup/start`
+
+Requires a fully authenticated session. Starts a pending TOTP setup and returns the QR data URL,
+manual key, otpauth URL, and expiry. Starting a new setup replaces any previous pending setup.
+
+```json
+{
+	"otpauthUrl": "otpauth://totp/example:user@example.com?secret=ABC...",
+	"qrCodeDataUrl": "data:image/png;base64,...",
+	"manualEntryKey": "ABCDEF...",
+	"expiresAt": "2026-05-17T10:10:00.000Z"
+}
+```
+
+### `POST /auth/2fa/setup/confirm`
+
+Requires a fully authenticated session. Body: `{ "code": "123456" }`. The code must match the
+pending TOTP secret. On success, 2FA is enabled, the current session is marked verified, and
+recovery codes are returned once.
+
+```json
+{
+	"recoveryCodes": ["ABCDE-12345", "FGHIJ-67890"]
+}
+```
+
+### `POST /auth/2fa/verify`
+
+Requires a valid partial session. Body: `{ "code": "123456" }`. Accepts a TOTP code or one unused
+recovery code. On success, marks the current session as 2FA verified.
+
+```json
+{
+	"verified": true
+}
+```
+
+### `POST /auth/2fa/disable`
+
+Requires a fully authenticated session. Body: `{ "code": "123456" }`. Accepts a TOTP or recovery
+code, disables 2FA, deletes recovery codes and pending setup, and revokes other active sessions.
+
+```json
+{
+	"disabled": true,
+	"revokedOtherSessionCount": 2
+}
+```
+
+### `POST /auth/2fa/recovery-codes/regenerate`
+
+Requires a fully authenticated session. Body: `{ "code": "123456" }`. Accepts a TOTP or recovery
+code, replaces old recovery codes, and returns the new codes once.
+
+```json
+{
+	"recoveryCodes": ["ABCDE-12345", "FGHIJ-67890"]
+}
+```
+
+### Two-Factor Errors
+
+- `401 two_factor_required` when a valid first-factor session still needs 2FA before accessing a
+  fully protected route.
+- `401 unauthorized` for invalid, expired, locked, or replayed 2FA attempts.
+- `404 two_factor_setup_not_found` when confirmation is attempted without a pending setup.
+
 ## Google Login
 
 `POST /auth/google`
@@ -342,7 +425,8 @@ None.
 
 ### Purpose
 
-Revokes the current session and clears the access-token cookie.
+Revokes the current session and clears the access-token cookie. Logout accepts a partial session so
+users can sign out even while 2FA verification is pending.
 
 ### How It Works
 
@@ -730,8 +814,7 @@ JSON body:
 {
 	"name": "Amina Rahman",
 	"image": "https://example.com/avatar.png",
-	"phone": "+8801712345678",
-	"is2faEnabled": false
+	"phone": "+8801712345678"
 }
 ```
 
@@ -740,7 +823,6 @@ JSON body:
 - `name`, when present, must be a string.
 - `image`, when present, must be a string.
 - `phone`, when present, must be a valid phone number.
-- `is2faEnabled`, when present, must be a boolean.
 - Unknown body fields are rejected.
 
 ### Successful Response

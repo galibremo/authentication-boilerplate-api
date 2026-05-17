@@ -82,14 +82,13 @@ Creates a managed user account.
 	"password": "Passw0rd",
 	"phone": "+14155552671",
 	"emailVerified": true,
-	"is2faEnabled": false,
 	"role": "USER"
 }
 ```
 
-`name`, `password`, `phone`, `emailVerified`, and `is2faEnabled` are optional. Empty optional
-strings are stored as `null`. Email addresses are normalized to lowercase. Role assignment follows
-the hierarchy rules above.
+`name`, `password`, `phone`, and `emailVerified` are optional. Empty optional strings are stored as
+`null`. Email addresses are normalized to lowercase. Role assignment follows the hierarchy rules
+above. 2FA cannot be enabled through this endpoint.
 
 ### Example Success
 
@@ -128,8 +127,7 @@ At least one field is required.
 	"name": "Avery Stone",
 	"email": "avery.stone@example.com",
 	"phone": "+14155552671",
-	"emailVerified": true,
-	"is2faEnabled": false
+	"emailVerified": true
 }
 ```
 
@@ -208,6 +206,26 @@ Deletes a target user. `:id` is the public user UUID.
 	},
 	"timestamp": "2026-05-17T10:08:00.000Z",
 	"path": "/users/9c0b55fe-4e2f-4fd0-8ce2-fc0f8f39a0c7"
+}
+```
+
+## `POST /users/:id/2fa/reset`
+
+Disables 2FA for a target user and revokes all of their sessions. `:id` is the public user UUID.
+The same conservative management rules apply.
+
+### Example Success
+
+```json
+{
+	"statusCode": 200,
+	"message": "User two-factor authentication reset successfully",
+	"data": {
+		"reset": true,
+		"revokedCount": 3
+	},
+	"timestamp": "2026-05-17T10:09:00.000Z",
+	"path": "/users/9c0b55fe-4e2f-4fd0-8ce2-fc0f8f39a0c7/2fa/reset"
 }
 ```
 
