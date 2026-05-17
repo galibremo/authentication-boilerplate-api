@@ -61,11 +61,12 @@ export class AuthService {
 		});
 	}
 
-	async requestMagicLink(email: string): Promise<void> {
+	async requestMagicLink(email: string, redirectUrl?: string | null): Promise<void> {
 		const normalizedEmail = this.normalizeEmail(email);
 		const token = randomBytes(32).toString('hex');
 		const tokenHash = this.cryptoService.hash(token);
 		const expiresAt = new Date(Date.now() + magicLinkTimeout);
+		const safeRedirectPath = this.resolveSafeMagicLinkRedirectPath(redirectUrl);
 
 		await this.authRepository.transaction(async tx => {
 			await this.authRepository.deleteVerificationsByIdentifier(normalizedEmail, tx);
@@ -82,14 +83,22 @@ export class AuthService {
 		try {
 			await this.magicLinkEmailService.sendMagicLinkEmail({
 				email: normalizedEmail,
-				verificationUrl: this.buildMagicLinkVerificationUrl(normalizedEmail, token),
-				redirectUrl: this.buildMagicLinkRedirectUrl(),
+				verificationUrl: this.buildMagicLinkVerificationUrl(
+					normalizedEmail,
+					token,
+					safeRedirectPath,
+				),
+				redirectUrl: this.buildMagicLinkRedirectUrl(safeRedirectPath),
 			});
 		} catch (error) {
 			await this.authRepository.deleteVerificationByIdentifierValue(normalizedEmail, tokenHash);
 
 			throw error;
 		}
+	}
+
+	getMagicLinkRedirectUrl(redirectUrl?: string | null): string {
+		return this.buildMagicLinkRedirectUrl(this.resolveSafeMagicLinkRedirectPath(redirectUrl));
 	}
 
 	async verifyMagicLink(
@@ -330,17 +339,39 @@ export class AuthService {
 		return email.trim().toLowerCase();
 	}
 
-	private buildMagicLinkVerificationUrl(email: string, token: string): string {
+	private buildMagicLinkVerificationUrl(
+		email: string,
+		token: string,
+		redirectUrl?: string | null,
+	): string {
 		const appUrl = this.configService.get('APP_URL', { infer: true });
 		const url = new URL('/auth/magic-link/verify', appUrl);
 		url.searchParams.set('email', email);
 		url.searchParams.set('token', token);
+		if (redirectUrl) url.searchParams.set('redirect', redirectUrl);
 		return url.toString();
 	}
 
-	private buildMagicLinkRedirectUrl(): string {
+	private buildMagicLinkRedirectUrl(redirectUrl?: string | null): string {
 		const appUrl = this.configService.get('APP_URL', { infer: true });
-		return new URL('/auth/magic-link/success', appUrl).toString();
+		const url = new URL('/auth/magic-link/success', appUrl);
+		if (redirectUrl) url.searchParams.set('redirect', redirectUrl);
+		return url.toString();
+	}
+
+	private resolveSafeMagicLinkRedirectPath(redirectUrl?: string | null): string | null {
+		if (!redirectUrl) return null;
+
+		try {
+			const appUrl = new URL(this.configService.get('APP_URL', { infer: true }));
+			const parsed = new URL(redirectUrl, appUrl);
+
+			if (parsed.origin !== appUrl.origin) return null;
+
+			return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+		} catch {
+			return null;
+		}
 	}
 
 	private async findOrProvisionMagicLinkUser(

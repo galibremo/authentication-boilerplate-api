@@ -66,7 +66,7 @@ export class AuthController {
 	async requestMagicLink(
 		@Body(new ZodValidationPipe(magicLinkRequestSchema)) requestDto: MagicLinkRequestDto,
 	): Promise<ApiResponse<null>> {
-		await this.authService.requestMagicLink(requestDto.email);
+		await this.authService.requestMagicLink(requestDto.email, requestDto.redirectUrl);
 
 		return createApiResponse(
 			HttpStatus.OK,
@@ -91,10 +91,7 @@ export class AuthController {
 		);
 
 		response.redirect(
-			new URL(
-				'/auth/magic-link/success',
-				this.configService.get('APP_URL', { infer: true }),
-			).toString(),
+			this.authService.getMagicLinkRedirectUrl(verifyDto.redirectUrl ?? verifyDto.redirect),
 		);
 	}
 

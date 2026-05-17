@@ -33,9 +33,18 @@ export const googleLoginSchema = z
 	})
 	.strict();
 
+const magicLinkRedirectSchema = z.preprocess(value => {
+	if (Array.isArray(value)) return value[0];
+	if (typeof value !== 'string') return undefined;
+
+	const trimmed = value.trim();
+	return trimmed || undefined;
+}, validateString('Redirect URL', { max: 2048 }).optional());
+
 export const magicLinkRequestSchema = z
 	.object({
 		email: validateEmail,
+		redirectUrl: magicLinkRedirectSchema,
 	})
 	.strict();
 
@@ -43,6 +52,8 @@ export const magicLinkVerifySchema = z
 	.object({
 		email: validateEmail,
 		token: validateString('Magic link token'),
+		redirect: magicLinkRedirectSchema,
+		redirectUrl: magicLinkRedirectSchema,
 	})
 	.strict();
 
