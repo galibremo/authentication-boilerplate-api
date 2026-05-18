@@ -10,38 +10,81 @@ import { AuthSessionRepository } from './auth-session.repository';
 import { mapSessionResponse } from './auth.mapper';
 import type { SessionListQueryDto } from './auth.schema';
 
+const clientUserAgentHeaders = [
+	'x-client-user-agent',
+	'x-original-user-agent',
+	'x-forwarded-user-agent',
+	'user-agent',
+] as const;
+
 @Injectable()
 export class AuthSession {
 	constructor(private readonly authSessionRepository: AuthSessionRepository) {}
 
 	getSessionInfo(request: Request) {
-		const userAgent = request.headers['user-agent'] || 'Unknown';
-		const parser = new UAParser(userAgent);
+		const rawUserAgent = this.getClientUserAgent(request);
+		const parser = new UAParser(rawUserAgent ?? '');
 
 		const device = parser.getDevice();
 		const os = parser.getOS();
 		const browser = parser.getBrowser();
 
-		const deviceType = device.type || 'desktop';
+		const browserName = this.getKnownValue(browser.name) ?? 'Unknown Client';
+		const browserVersion = this.getKnownValue(browser.version);
+		const osName = this.getKnownValue(os.name) ?? 'Unknown OS';
+		const osVersion = this.getKnownValue(os.version);
+		const hasParsedClient =
+			!!this.getKnownValue(browser.name) || !!this.getKnownValue(os.name);
+		const deviceType =
+			this.getKnownValue(device.type) ?? (hasParsedClient ? 'desktop' : 'Unknown');
 
-		const deviceName =
-			(os.name || 'Unknown OS') +
-			' ' +
-			(os.version || '') +
-			' - ' +
-			(browser.name || 'Unknown Client');
+		const deviceName = `${this.joinKnownValues(osName, osVersion, ' ')} - ${browserName}`;
 
 		const ipAddress =
-			request.headers['x-forwarded-for']?.toString().split(',')[0] ||
-			request.socket.remoteAddress ||
-			'Unknown';
+			this.getClientIpAddress(request) ?? request.socket.remoteAddress ?? 'Unknown';
 
 		return {
-			userAgent: `${parser.getBrowser().name} - ${parser.getBrowser().version}`,
+			userAgent: this.joinKnownValues(browserName, browserVersion, ' - '),
 			deviceType,
 			deviceName,
 			ipAddress,
 		};
+	}
+
+	private getClientUserAgent(request: Request): string | undefined {
+		for (const header of clientUserAgentHeaders) {
+			const value = this.getKnownValue(request.get(header));
+			if (value) return value;
+		}
+
+		return undefined;
+	}
+
+	private getClientIpAddress(request: Request): string | undefined {
+		const forwardedFor = this.getKnownValue(request.get('x-forwarded-for'));
+		const forwardedIp = forwardedFor?.split(',')[0]?.trim();
+
+		return this.getKnownValue(forwardedIp) ?? this.getKnownValue(request.get('x-real-ip'));
+	}
+
+	private getKnownValue(value: string | undefined): string | undefined {
+		const trimmed = value?.trim();
+		if (!trimmed) return undefined;
+
+		const normalized = trimmed.toLowerCase();
+		if (normalized === 'undefined' || normalized === 'null' || normalized === 'unknown') {
+			return undefined;
+		}
+
+		return trimmed;
+	}
+
+	private joinKnownValues(
+		requiredValue: string,
+		optionalValue: string | undefined,
+		separator: string,
+	): string {
+		return optionalValue ? `${requiredValue}${separator}${optionalValue}` : requiredValue;
 	}
 
 	async createSession(data: SessionDataType): Promise<string> {
