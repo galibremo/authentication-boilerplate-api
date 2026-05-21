@@ -61,6 +61,7 @@ export class UsersRepository {
 					schema.users.emailVerified,
 					schema.users.is2faEnabled,
 					schema.users.role,
+					schema.users.isApproved,
 					schema.users.createdAt,
 					schema.users.updatedAt,
 				)
@@ -104,6 +105,7 @@ export class UsersRepository {
 				schema.users.emailVerified,
 				schema.users.is2faEnabled,
 				schema.users.role,
+				schema.users.isApproved,
 				schema.users.createdAt,
 				schema.users.updatedAt,
 			)
@@ -171,6 +173,9 @@ export class UsersRepository {
 			typeof query.emailVerified === 'boolean'
 				? eq(schema.users.emailVerified, query.emailVerified)
 				: undefined,
+			typeof query.isApproved === 'boolean'
+				? eq(schema.users.isApproved, query.isApproved)
+				: undefined,
 			fromDate ? gte(schema.users.createdAt, fromDate) : undefined,
 			toDate ? lte(schema.users.createdAt, toDate) : undefined,
 		].filter(Boolean) as SQL<unknown>[];
@@ -207,6 +212,7 @@ export class UsersRepository {
 			emailVerified: schema.users.emailVerified,
 			is2faEnabled: schema.users.is2faEnabled,
 			role: schema.users.role,
+			isApproved: schema.users.isApproved,
 			activeSessionCount,
 			createdAt: schema.users.createdAt,
 			updatedAt: schema.users.updatedAt,

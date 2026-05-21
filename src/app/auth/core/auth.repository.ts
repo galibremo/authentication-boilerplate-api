@@ -56,7 +56,11 @@ export class AuthRepository {
 			.then(rows => rows[0]);
 	}
 
-	async createMagicLinkUser(email: string, db: AuthDbClient = this.db): Promise<UserSchemaType> {
+	async createMagicLinkUser(
+		email: string,
+		isApproved = true,
+		db: AuthDbClient = this.db,
+	): Promise<UserSchemaType> {
 		return db
 			.insert(schema.users)
 			.values({
@@ -68,6 +72,7 @@ export class AuthRepository {
 				imageInformation: null,
 				phone: null,
 				role: 'USER',
+				isApproved,
 			})
 			.returning()
 			.then(rows => rows[0]);

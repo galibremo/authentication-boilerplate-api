@@ -6,6 +6,7 @@ import { AuthModule } from './app/auth/auth.module';
 import { CsrfModule } from './app/csrf/csrf.module';
 import { MediaModule } from './app/media/media.module';
 import { UsersModule } from './app/users/users.module';
+import { SystemModule } from './app/system/system.module';
 import { validateEnv } from './core/validators/env';
 import { CryptoModule } from './crypto/crypto.module';
 import { DatabaseModule } from './database/database.module';
@@ -23,6 +24,7 @@ import { DatabaseModule } from './database/database.module';
 		AuthModule,
 		MediaModule,
 		UsersModule,
+		SystemModule,
 	],
 	controllers: [AppController],
 	providers: [],

@@ -56,6 +56,7 @@ export class UsersService {
 				phone: data.phone ?? null,
 				emailVerified: data.emailVerified ?? false,
 				role: data.role,
+				isApproved: data.isApproved ?? true,
 			});
 
 			if (!createdUser) throw notFoundError('user_not_found', 'User not found');
@@ -86,6 +87,7 @@ export class UsersService {
 				...(data.email ? { email: data.email } : {}),
 				...(Object.prototype.hasOwnProperty.call(data, 'phone') ? { phone: data.phone ?? null } : {}),
 				...(typeof data.emailVerified === 'boolean' ? { emailVerified: data.emailVerified } : {}),
+				...(typeof data.isApproved === 'boolean' ? { isApproved: data.isApproved } : {}),
 			});
 
 			return this.getManagementResponse(targetUser.id);

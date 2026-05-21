@@ -10,6 +10,7 @@ import { EnvType } from '../../../core/validators/env';
 import { CryptoService } from '../../../crypto/crypto.service';
 import { AuthService } from '../core/auth.service';
 import { SessionService } from '../session/session.service';
+import { SystemService } from '../../system/system.service';
 
 interface JwtPayload {
 	sub: number;
@@ -23,6 +24,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 		private readonly authService: AuthService,
 		private readonly sessionService: SessionService,
 		private readonly cryptoService: CryptoService,
+		private readonly systemService: SystemService,
 	) {
 		super({
 			jwtFromRequest: ExtractJwt.fromExtractors([
@@ -51,6 +53,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 		const user = await this.authService.findUserById(payload.sub);
 
 		if (!user.emailVerified) throw unauthorizedError('Email not verified');
+
+		// Check if user is approved
+		if (!user.isApproved) {
+			throw unauthorizedError('Your account is pending approval by an administrator.');
+		}
+
+		// Check if user's role is allowed dashboard access
+		if (user.role !== 'SUPER_ADMIN') {
+			const settings = await this.systemService.getSettings();
+			if (!settings.allowedRoles.includes(user.role)) {
+				throw unauthorizedError('Your role is not allowed to access the dashboard.');
+			}
+		}
 
 		// Check if the user session is valid
 		const session = await this.sessionService.validateSession(user.id, jwtToken);

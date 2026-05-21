@@ -1,13 +1,14 @@
 import { z } from 'zod';
 
+import { baseQuerySchema, type SortableField } from '../../core/validators/base-query.schema';
 import {
+	validateBoolean,
 	validateEmail,
 	validateEnum,
 	validatePassword,
 	validatePhoneNumber,
 	validateString,
 } from '../../core/validators/common.schema';
-import { baseQuerySchema, type SortableField } from '../../core/validators/base-query.schema';
 import { roleTypeEnum } from '../../models/drizzle/enum.model';
 
 export const userRoleValues = roleTypeEnum.enumValues;
@@ -18,6 +19,7 @@ const USER_SORTABLE_FIELDS: readonly SortableField[] = [
 	{ name: 'emailVerified', queryName: 'emailVerified' },
 	{ name: 'is2faEnabled', queryName: 'is2faEnabled' },
 	{ name: 'role', queryName: 'role' },
+	{ name: 'isApproved', queryName: 'isApproved' },
 	{ name: 'activeSessionCount', queryName: 'activeSessionCount' },
 	{ name: 'createdAt', queryName: 'createdAt' },
 	{ name: 'updatedAt', queryName: 'updatedAt' },
@@ -31,25 +33,43 @@ const roleQuerySchema = validateString('Role')
 			.filter(Boolean),
 	)
 	.refine(
-		values => values.every(role => userRoleValues.includes(role as (typeof userRoleValues)[number])),
-		{ error: 'Role is invalid' },
+		values =>
+			values.every(role => userRoleValues.includes(role as (typeof userRoleValues)[number])),
+		{ message: 'Role is invalid' },
 	)
 	.transform(values => values as (typeof userRoleValues)[number][])
 	.optional();
 
 const emailVerifiedQuerySchema = z
-	.preprocess(value => {
-		const rawValue = Array.isArray(value) ? value[0] : value;
-		if (typeof rawValue !== 'string') return undefined;
+	.preprocess(
+		value => {
+			const rawValue = Array.isArray(value) ? value[0] : value;
+			if (typeof rawValue !== 'string') return undefined;
 
-		const normalized = rawValue.trim().toLowerCase();
-		return normalized || undefined;
-	}, z.enum(['true', 'false'], { error: 'Email Verified must be true or false' }).optional())
+			const normalized = rawValue.trim().toLowerCase();
+			return normalized || undefined;
+		},
+		validateEnum('Email Verified', ['true', 'false']).optional(),
+	)
+	.transform(value => (value === undefined ? undefined : value === 'true'));
+
+const isApprovedQuerySchema = z
+	.preprocess(
+		value => {
+			const rawValue = Array.isArray(value) ? value[0] : value;
+			if (typeof rawValue !== 'string') return undefined;
+
+			const normalized = rawValue.trim().toLowerCase();
+			return normalized || undefined;
+		},
+		validateEnum('Is Approved', ['true', 'false']).optional(),
+	)
 	.transform(value => (value === undefined ? undefined : value === 'true'));
 
 export const usersListQuerySchema = baseQuerySchema(USER_SORTABLE_FIELDS).safeExtend({
 	role: roleQuerySchema,
 	emailVerified: emailVerifiedQuerySchema,
+	isApproved: isApprovedQuerySchema,
 });
 
 export const updateUserRoleSchema = z
@@ -59,14 +79,13 @@ export const updateUserRoleSchema = z
 	.strict();
 
 const optionalNullableString = (name: string, max = 255) =>
-	z
-		.preprocess(value => {
-			if (value === null) return null;
-			if (typeof value !== 'string') return undefined;
+	z.preprocess(value => {
+		if (value === null) return null;
+		if (typeof value !== 'string') return undefined;
 
-			const trimmed = value.trim();
-			return trimmed || null;
-		}, validateString(name, { max }).nullable().optional());
+		const trimmed = value.trim();
+		return trimmed || null;
+	}, validateString(name, { max }).nullable().optional());
 
 const optionalNullablePhone = z.preprocess(value => {
 	if (value === null) return null;
@@ -90,8 +109,9 @@ export const createUserSchema = z
 		email: validateEmail.transform(value => value.toLowerCase()),
 		password: optionalNullablePassword,
 		phone: optionalNullablePhone,
-		emailVerified: z.boolean({ error: 'Email Verified is required' }).optional(),
+		emailVerified: validateBoolean('Email Verified').optional(),
 		role: validateEnum('Role', userRoleValues),
+		isApproved: validateBoolean('Is Approved').optional(),
 	})
 	.strict();
 
@@ -100,11 +120,12 @@ export const updateUserSchema = z
 		name: optionalNullableString('Name'),
 		email: validateEmail.transform(value => value.toLowerCase()).optional(),
 		phone: optionalNullablePhone,
-		emailVerified: z.boolean({ error: 'Email Verified is required' }).optional(),
+		emailVerified: validateBoolean('Email Verified').optional(),
+		isApproved: validateBoolean('Is Approved').optional(),
 	})
 	.strict()
 	.refine(data => Object.keys(data).length > 0, {
-		error: 'At least one user field must be provided',
+		message: 'At least one user field must be provided',
 	});
 
 export type UsersListQueryDto = z.infer<typeof usersListQuerySchema>;

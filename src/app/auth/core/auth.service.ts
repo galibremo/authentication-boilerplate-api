@@ -20,6 +20,7 @@ import { SessionService } from '../session/session.service';
 import { stripUserPassword } from './auth.mapper';
 import { AUTH_CLOUDINARY_SERVICE } from './auth.providers';
 import { AuthRepository, type AuthDbClient } from './auth.repository';
+import { SystemService } from '../../system/system.service';
 import type { LoginDto, UpdateProfileDto } from './auth.schema';
 import type {
 	CreateUser,
@@ -42,6 +43,7 @@ export class AuthService {
 		@Inject(AUTH_CLOUDINARY_SERVICE)
 		private readonly cloudinaryImageService: CloudinaryImageService,
 		private readonly configService: ConfigService<EnvType, true>,
+		private readonly systemService: SystemService,
 	) {}
 
 	async generateAccessToken(userInfo: UserInformation): Promise<string> {
@@ -66,6 +68,16 @@ export class AuthService {
 
 	async requestMagicLink(email: string, redirectUrl?: string | null): Promise<void> {
 		const normalizedEmail = this.normalizeEmail(email);
+
+		// Check if access model is CLOSED and user does not exist
+		const settings = await this.systemService.getSettings();
+		if (settings.accessModel === 'CLOSED') {
+			const userExists = await this.checkIfUserExists(normalizedEmail);
+			if (!userExists) {
+				throw badRequestError('Registration is closed. Only pre-created accounts can sign in.');
+			}
+		}
+
 		const token = randomBytes(32).toString('hex');
 		const tokenHash = this.cryptoService.hash(token);
 		const expiresAt = new Date(Date.now() + magicLinkTimeout);
@@ -318,6 +330,13 @@ export class AuthService {
 			return stripUserPassword(existingUser);
 		}
 
+		const settings = await this.systemService.getSettings();
+		if (settings.accessModel === 'CLOSED') {
+			throw unauthorizedError('Registration is closed. Only pre-created accounts can sign in.');
+		}
+
+		const isApproved = settings.accessModel !== 'APPROVAL_BASED';
+
 		const newUser = await this.createUser({
 			name: profile.name,
 			email: profile.email,
@@ -327,6 +346,7 @@ export class AuthService {
 			emailVerified: profile.emailVerified,
 			phone: null,
 			role: 'USER',
+			isApproved,
 		});
 
 		await this.authRepository.createAccountLink({
@@ -393,7 +413,14 @@ export class AuthService {
 			return stripUserPassword(user);
 		}
 
-		const newUser = await this.authRepository.createMagicLinkUser(email, db);
+		const settings = await this.systemService.getSettings();
+		if (settings.accessModel === 'CLOSED') {
+			throw unauthorizedError('Registration is closed. Only pre-created accounts can sign in.');
+		}
+
+		const isApproved = settings.accessModel !== 'APPROVAL_BASED';
+
+		const newUser = await this.authRepository.createMagicLinkUser(email, isApproved, db);
 
 		return stripUserPassword(newUser);
 	}

@@ -5,6 +5,7 @@ import * as EmailTemplateSchema from '../models/drizzle/email-template.model';
 import * as EnumSchema from '../models/drizzle/enum.model';
 import * as MediaSchema from '../models/drizzle/media.model';
 import * as RelationSchema from '../models/drizzle/relation.model';
+import * as SystemSchema from '../models/drizzle/system.model';
 
 const schema = {
 	...AuthSchema,
@@ -12,6 +13,7 @@ const schema = {
 	...EnumSchema,
 	...MediaSchema,
 	...RelationSchema,
+	...SystemSchema,
 };
 
 export default schema;

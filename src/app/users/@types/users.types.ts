@@ -26,6 +26,7 @@ export type UserManagementRow = Pick<
 	| 'emailVerified'
 	| 'is2faEnabled'
 	| 'role'
+	| 'isApproved'
 	| 'createdAt'
 	| 'updatedAt'
 > & {

@@ -10,6 +10,7 @@ export function mapUserManagementResponse(row: UserManagementRow): UserManagemen
 		emailVerified: row.emailVerified,
 		is2faEnabled: row.is2faEnabled,
 		role: row.role,
+		isApproved: row.isApproved,
 		activeSessionCount: Number(row.activeSessionCount ?? 0),
 		createdAt: row.createdAt,
 		updatedAt: row.updatedAt,

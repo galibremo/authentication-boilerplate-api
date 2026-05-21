@@ -6,6 +6,7 @@ import { PassportModule } from '@nestjs/passport';
 import { sessionTimeout } from '../../core/helpers/constant.helpers';
 import { EnvType } from '../../core/validators/env';
 import { BrevoModule } from '../brevo/brevo.module';
+import { SystemModule } from '../system/system.module';
 import { AUTH_CLOUDINARY_SERVICE, authCloudinaryProvider } from './core/auth.providers';
 import { AuthRepository } from './core/auth.repository';
 import { AuthService } from './core/auth.service';
@@ -22,6 +23,7 @@ import { AuthController } from './auth.controller';
 	imports: [
 		PassportModule,
 		BrevoModule,
+		SystemModule,
 		JwtModule.registerAsync({
 			imports: [ConfigModule],
 			inject: [ConfigService],

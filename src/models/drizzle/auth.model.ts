@@ -31,6 +31,7 @@ export const users = pgTable(
 		is2faEnabled: boolean('is_2fa_enabled').default(false).notNull(),
 		twoFactorSecretEncrypted: text('two_factor_secret_encrypted'),
 		role: roleTypeEnum('role').default('USER').notNull(),
+		isApproved: boolean('is_approved').default(true).notNull(),
 		...timestamps,
 	},
 	table => [
