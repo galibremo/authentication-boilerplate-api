@@ -15,9 +15,11 @@ import {
 import { magicLinkTimeout, sessionTimeout } from '../../../core/helpers/constant.helpers';
 import { EnvType } from '../../../core/validators/env';
 import { CryptoService } from '../../../crypto/crypto.service';
+import { AuditLogService } from '../../audit-log/audit-log.service';
 import { CloudinaryImageService } from '../../media/services/cloudinary.service';
 import { SystemService } from '../../system/system.service';
 import { MagicLinkEmailService } from '../services/magic-link-email.service';
+import { WelcomeEmailService } from '../services/welcome-email.service';
 import { SessionService } from '../session/session.service';
 import { stripUserPassword } from './auth.mapper';
 import { AUTH_CLOUDINARY_SERVICE } from './auth.providers';
@@ -49,6 +51,8 @@ export class AuthService {
 		private readonly sessionService: SessionService,
 		private readonly cryptoService: CryptoService,
 		private readonly magicLinkEmailService: MagicLinkEmailService,
+		private readonly welcomeEmailService: WelcomeEmailService,
+		private readonly auditLogService: AuditLogService,
 		@Inject(AUTH_CLOUDINARY_SERVICE)
 		private readonly cloudinaryImageService: CloudinaryImageService,
 		private readonly configService: ConfigService<EnvType, true>,
@@ -132,7 +136,7 @@ export class AuthService {
 		const normalizedEmail = this.normalizeEmail(input.email);
 		const tokenHash = this.cryptoService.hash(input.token);
 
-		const user = await this.authRepository.transaction(async tx => {
+		const provisioning = await this.authRepository.transaction(async tx => {
 			const verification = await this.authRepository.findVerification(
 				normalizedEmail,
 				tokenHash,
@@ -159,6 +163,26 @@ export class AuthService {
 
 			return userRecord;
 		});
+		const user = provisioning.user;
+
+		if (provisioning.created) {
+			await this.welcomeEmailService.sendWelcomeEmail({
+				email: user.email,
+				name: user.name,
+			});
+			await this.auditLogService.logAction({
+				actor: null,
+				action: 'USER_PROVISIONED',
+				targetType: 'user',
+				targetId: user.publicId,
+				metadata: {
+					provider: 'magic_link',
+					email: user.email,
+					role: user.role,
+					isApproved: user.isApproved,
+				},
+			});
+		}
 
 		await this.assertCanAccessDashboard(user);
 
@@ -427,6 +451,23 @@ export class AuthService {
 			userId: newUser.id,
 		});
 
+		await this.welcomeEmailService.sendWelcomeEmail({
+			email: newUser.email,
+			name: newUser.name,
+		});
+		await this.auditLogService.logAction({
+			actor: null,
+			action: 'USER_PROVISIONED',
+			targetType: 'user',
+			targetId: newUser.publicId,
+			metadata: {
+				provider: 'google',
+				email: newUser.email,
+				role: newUser.role,
+				isApproved: newUser.isApproved,
+			},
+		});
+
 		return newUser;
 	}
 
@@ -505,7 +546,7 @@ export class AuthService {
 	private async findOrProvisionMagicLinkUser(
 		db: AuthDbClient,
 		email: string,
-	): Promise<UserWithoutPassword> {
+	): Promise<{ user: UserWithoutPassword; created: boolean }> {
 		const existingUser = await this.authRepository.findUserByEmail(email, db);
 
 		if (existingUser) {
@@ -515,7 +556,10 @@ export class AuthService {
 
 			if (!user) throw notFoundError('user_not_found', 'User not found');
 
-			return stripUserPassword(user);
+			return {
+				user: stripUserPassword(user),
+				created: false,
+			};
 		}
 
 		const settings = await this.systemService.getSettings();
@@ -527,6 +571,9 @@ export class AuthService {
 
 		const newUser = await this.authRepository.createMagicLinkUser(email, isApproved, db);
 
-		return stripUserPassword(newUser);
+		return {
+			user: stripUserPassword(newUser),
+			created: true,
+		};
 	}
 }

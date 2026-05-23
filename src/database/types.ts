@@ -6,6 +6,7 @@ import {
 	twoFactorSetups,
 	users,
 } from '../models/drizzle/auth.model';
+import { auditLogs } from '../models/drizzle/audit-log.model';
 import { emailTemplates } from '../models/drizzle/email-template.model';
 import { roleTypeEnum } from '../models/drizzle/enum.model';
 import { media } from '../models/drizzle/media.model';
@@ -19,6 +20,7 @@ export type AccountSchemaType = InferSelectModel<typeof accounts>;
 export type SessionSchemaType = InferSelectModel<typeof sessions>;
 export type TwoFactorSetupSchemaType = InferSelectModel<typeof twoFactorSetups>;
 export type TwoFactorRecoveryCodeSchemaType = InferSelectModel<typeof twoFactorRecoveryCodes>;
+export type AuditLogSchemaType = InferSelectModel<typeof auditLogs>;
 export type MediaSchemaType = InferSelectModel<typeof media>;
 export type EmailTemplateSchemaType = InferSelectModel<typeof emailTemplates>;
 export type SystemSettingsSchemaType = InferSelectModel<typeof systemSettings>;

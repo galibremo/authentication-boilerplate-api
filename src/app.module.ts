@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { DiscoveryModule, APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
+import { AuditLogModule } from './app/audit-log/audit-log.module';
 import { AuthModule } from './app/auth/auth.module';
 import { CsrfModule } from './app/csrf/csrf.module';
 import { HealthModule } from './app/health/health.module';
@@ -37,6 +38,7 @@ import { DatabaseModule } from './database/database.module';
 		CryptoModule,
 		CsrfModule,
 		DatabaseModule,
+		AuditLogModule,
 		AuthModule,
 		MediaModule,
 		UsersModule,

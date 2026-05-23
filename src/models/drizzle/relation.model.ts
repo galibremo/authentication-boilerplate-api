@@ -1,8 +1,10 @@
 import { relations } from 'drizzle-orm';
 
+import { auditLogs } from './audit-log.model';
 import { accounts, sessions, twoFactorRecoveryCodes, twoFactorSetups, users } from './auth.model';
 
 export const usersRelations = relations(users, ({ many }) => ({
+	auditLogs: many(auditLogs),
 	accounts: many(accounts),
 	sessions: many(sessions),
 	twoFactorSetups: many(twoFactorSetups),
@@ -19,6 +21,13 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
 export const accountsRelations = relations(accounts, ({ one }) => ({
 	user: one(users, {
 		fields: [accounts.userId],
+		references: [users.id],
+	}),
+}));
+
+export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
+	actor: one(users, {
+		fields: [auditLogs.actorId],
 		references: [users.id],
 	}),
 }));

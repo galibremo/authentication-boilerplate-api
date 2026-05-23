@@ -1,7 +1,9 @@
 import { Logger } from '@nestjs/common';
-import type { Request, Response, NextFunction } from 'express';
 import { randomUUID } from 'crypto';
+import type { Request, Response } from 'express';
 import { networkInterfaces } from 'os';
+import pino from 'pino';
+import pinoHttp, { type HttpLogger } from 'pino-http';
 
 function getNetworkAddress(): string {
 	const interfaces = networkInterfaces();
@@ -36,24 +38,76 @@ export function displayStartupInfo(port: number | string): void {
 	console.log('\n');
 }
 
-export function appLogger(req: Request, res: Response, next: NextFunction) {
-	const { method, originalUrl } = req;
-	const startTime = Date.now();
-	const requestId = req.requestId || randomUUID();
+function getRequestId(req: Request): string {
+	const header = req.headers['x-request-id'];
+	if (typeof header === 'string' && header.trim()) return header;
+	if (Array.isArray(header) && header[0]) return header[0];
 
-	res.on('finish', () => {
-		const duration = Date.now() - startTime;
-		const statusCode = res.statusCode;
-		const logger = new Logger('HTTP');
+	return req.requestId || randomUUID();
+}
 
-		// Color coding based on status code
-		const statusColor = statusCode >= 500 ? '31' : statusCode >= 400 ? '33' : '32';
-		const methodColor = '36'; // Cyan for method
+const isProduction = process.env.NODE_ENV === 'production';
 
-		logger.log(
-			`\x1b[${methodColor}m${method}\x1b[0m ${originalUrl} \x1b[${statusColor}m${statusCode}\x1b[0m - ${duration}ms requestId=${requestId}`,
-		);
-	});
+const logger = pino({
+	level: process.env.LOG_LEVEL || (isProduction ? 'info' : 'debug'),
+	transport: isProduction
+		? undefined
+		: {
+				target: 'pino-pretty',
+				options: {
+					colorize: true,
+					ignore: 'pid,hostname',
+					singleLine: true,
+					translateTime: 'SYS:standard',
+				},
+			},
+	redact: {
+		paths: ['req.headers.authorization', 'req.headers.cookie'],
+		censor: '[redacted]',
+	},
+});
 
-	next();
+export const appLogger: HttpLogger<Request, Response> = pinoHttp<Request, Response>({
+	logger,
+	genReqId(req) {
+		const requestId = req.requestId || getRequestId(req);
+		req.requestId = requestId;
+		return requestId;
+	},
+	customLogLevel(_req, res, error) {
+		if (error || res.statusCode >= 500) return 'error';
+		if (res.statusCode >= 400) return 'warn';
+		return 'info';
+	},
+	customSuccessObject(req, res, value) {
+		const logValue = getLogValue(value);
+
+		return {
+			...logValue,
+			requestId: req.requestId ?? req.id,
+			userId: req.user?.id ?? null,
+			method: req.method,
+			url: req.originalUrl || req.url,
+			statusCode: res.statusCode,
+		};
+	},
+	customErrorObject(req, res, error, value) {
+		const logValue = getLogValue(value);
+
+		return {
+			...logValue,
+			requestId: req.requestId ?? req.id,
+			userId: req.user?.id ?? null,
+			method: req.method,
+			url: req.originalUrl || req.url,
+			statusCode: res.statusCode,
+			errorName: error.name,
+		};
+	},
+});
+
+function getLogValue(value: unknown): Record<string, unknown> {
+	return typeof value === 'object' && value !== null && !Array.isArray(value)
+		? (value as Record<string, unknown>)
+		: {};
 }

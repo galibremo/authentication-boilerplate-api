@@ -69,6 +69,42 @@ GET /users?page=1&pageSize=10&role=USER,MANAGER&emailVerified=true&sort=createdA
 }
 ```
 
+## `GET /users/:id`
+
+Fetches one managed user by public user UUID. The same conservative management rules apply, so
+admins cannot fetch their own account through this module.
+
+### Example Request
+
+```http
+GET /users/9c0b55fe-4e2f-4fd0-8ce2-fc0f8f39a0c7
+```
+
+### Example Success
+
+```json
+{
+	"statusCode": 200,
+	"message": "User fetched successfully",
+	"data": {
+		"id": "9c0b55fe-4e2f-4fd0-8ce2-fc0f8f39a0c7",
+		"name": "Avery Stone",
+		"email": "avery@example.com",
+		"image": null,
+		"phone": null,
+		"emailVerified": true,
+		"is2faEnabled": false,
+		"role": "USER",
+		"isApproved": true,
+		"activeSessionCount": 2,
+		"createdAt": "2026-05-17T10:00:00.000Z",
+		"updatedAt": "2026-05-17T10:00:00.000Z"
+	},
+	"timestamp": "2026-05-17T10:00:00.000Z",
+	"path": "/users/9c0b55fe-4e2f-4fd0-8ce2-fc0f8f39a0c7"
+}
+```
+
 ## `POST /users`
 
 Creates a managed user account.

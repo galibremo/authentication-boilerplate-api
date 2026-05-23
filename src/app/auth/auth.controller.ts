@@ -31,6 +31,7 @@ import {
 import { ZodValidationPipe } from '../../core/pipes/zod-validation.pipe';
 import { EnvType } from '../../core/validators/env';
 import { FILE_SIZE_LIMIT, singleFileSchema, ZodFileValidationPipe } from '../media/media.pipe';
+import { AuditLogService } from '../audit-log/audit-log.service';
 import type { UserWithoutPassword, UserWithoutPasswordResponse } from './core/auth.types';
 import { mapUserResponse } from './core/auth.mapper';
 import {
@@ -48,6 +49,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { PartialJwtAuthGuard } from './guards/partial-jwt-auth.guard';
 import { mapSessionResponse } from './session/session.mapper';
 import { SessionService } from './session/session.service';
+import { TwoFactorAlertEmailService } from './services/two-factor-alert-email.service';
 import {
 	type SessionListQueryDto,
 	sessionListQuerySchema,
@@ -76,6 +78,8 @@ export class AuthController {
 		private readonly authService: AuthService,
 		private readonly sessionService: SessionService,
 		private readonly twoFactorService: TwoFactorService,
+		private readonly auditLogService: AuditLogService,
+		private readonly twoFactorAlertEmailService: TwoFactorAlertEmailService,
 		private readonly configService: ConfigService<EnvType, true>,
 	) {}
 
@@ -114,6 +118,19 @@ export class AuthController {
 				AppHelpers.accessTokenCookieConfig(this.configService),
 			);
 
+			await this.auditLogService.logAction({
+				actor: result.user,
+				action: 'LOGIN_SUCCESS',
+				targetType: 'user',
+				targetId: result.user.publicId,
+				metadata: {
+					method: 'magic_link',
+					deviceName: userDeviceInfo.deviceName,
+					deviceType: userDeviceInfo.deviceType,
+				},
+				request,
+			});
+
 			response.redirect(
 				this.authService.getMagicLinkRedirectUrl(verifyDto.redirectUrl ?? verifyDto.redirect),
 			);
@@ -145,6 +162,19 @@ export class AuthController {
 			result.sessionToken,
 			AppHelpers.accessTokenCookieConfig(this.configService),
 		);
+
+		await this.auditLogService.logAction({
+			actor: result.user,
+			action: 'LOGIN_SUCCESS',
+			targetType: 'user',
+			targetId: result.user.publicId,
+			metadata: {
+				method: 'magic_link',
+				deviceName: userDeviceInfo.deviceName,
+				deviceType: userDeviceInfo.deviceType,
+			},
+			request,
+		});
 
 		return createApiResponse(
 			HttpStatus.OK,
@@ -207,6 +237,25 @@ export class AuthController {
 	): Promise<ApiResponse<TwoFactorRecoveryCodesResponse>> {
 		const session = await this.getCurrentSession(user, request);
 		const result = await this.twoFactorService.confirmSetup(user, session, body.code);
+		const userDeviceInfo = this.sessionService.getSessionInfo(request);
+
+		await this.auditLogService.logAction({
+			actor: user,
+			action: '2FA_ENABLED',
+			targetType: 'user',
+			targetId: user.publicId,
+			metadata: {
+				recoveryCodeCount: result.recoveryCodes.length,
+			},
+			request,
+		});
+		await this.twoFactorAlertEmailService.sendTwoFactorAlertEmail({
+			email: user.email,
+			name: user.name,
+			event: 'enabled',
+			ipAddress: userDeviceInfo.ipAddress,
+			userAgent: userDeviceInfo.userAgent,
+		});
 
 		return createApiResponse(HttpStatus.OK, 'Two-factor setup confirmed successfully', result);
 	}
@@ -246,12 +295,34 @@ export class AuthController {
 	): Promise<ApiResponse<TwoFactorDisableResponse>> {
 		const sessionToken = this.getSessionToken(request);
 		const session = await this.sessionService.validateSession(user.id, sessionToken);
+		const wasTwoFactorEnabled = user.is2faEnabled;
 		const result = await this.twoFactorService.disableTwoFactor(
 			user,
 			session,
 			sessionToken,
 			body.code,
 		);
+		const userDeviceInfo = this.sessionService.getSessionInfo(request);
+
+		if (wasTwoFactorEnabled) {
+			await this.auditLogService.logAction({
+				actor: user,
+				action: '2FA_DISABLED',
+				targetType: 'user',
+				targetId: user.publicId,
+				metadata: {
+					revokedOtherSessionCount: result.revokedOtherSessionCount,
+				},
+				request,
+			});
+			await this.twoFactorAlertEmailService.sendTwoFactorAlertEmail({
+				email: user.email,
+				name: user.name,
+				event: 'disabled',
+				ipAddress: userDeviceInfo.ipAddress,
+				userAgent: userDeviceInfo.userAgent,
+			});
+		}
 
 		return createApiResponse(HttpStatus.OK, 'Two-factor disabled successfully', result);
 	}
@@ -420,6 +491,19 @@ export class AuthController {
 			accessToken,
 			AppHelpers.accessTokenCookieConfig(this.configService),
 		);
+
+		await this.auditLogService.logAction({
+			actor: user,
+			action: 'LOGIN_SUCCESS',
+			targetType: 'user',
+			targetId: user.publicId,
+			metadata: {
+				method: 'google',
+				deviceName: userDeviceInfo.deviceName,
+				deviceType: userDeviceInfo.deviceType,
+			},
+			request,
+		});
 
 		return createApiResponse(HttpStatus.OK, 'Google login successful', mapUserResponse(user));
 	}

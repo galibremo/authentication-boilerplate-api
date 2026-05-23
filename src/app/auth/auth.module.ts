@@ -5,6 +5,7 @@ import { PassportModule } from '@nestjs/passport';
 
 import { sessionTimeout } from '../../core/helpers/constant.helpers';
 import { EnvType } from '../../core/validators/env';
+import { AuditLogModule } from '../audit-log/audit-log.module';
 import { BrevoModule } from '../brevo/brevo.module';
 import { SystemModule } from '../system/system.module';
 import { AUTH_CLOUDINARY_SERVICE, authCloudinaryProvider } from './core/auth.providers';
@@ -14,7 +15,11 @@ import { SessionRepository } from './session/session.repository';
 import { SessionService } from './session/session.service';
 import { TwoFactorRepository } from './two-factor/two-factor.repository';
 import { TwoFactorService } from './two-factor/two-factor.service';
+import { ApprovalEmailService } from './services/approval-email.service';
+import { InvitationEmailService } from './services/invitation-email.service';
 import { MagicLinkEmailService } from './services/magic-link-email.service';
+import { TwoFactorAlertEmailService } from './services/two-factor-alert-email.service';
+import { WelcomeEmailService } from './services/welcome-email.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtPartialStrategy } from './strategies/jwt-partial.strategy';
 import { AuthController } from './auth.controller';
@@ -22,6 +27,7 @@ import { AuthController } from './auth.controller';
 @Module({
 	imports: [
 		PassportModule,
+		AuditLogModule,
 		BrevoModule,
 		SystemModule,
 		JwtModule.registerAsync({
@@ -42,10 +48,21 @@ import { AuthController } from './auth.controller';
 		SessionRepository,
 		TwoFactorService,
 		TwoFactorRepository,
+		ApprovalEmailService,
+		InvitationEmailService,
 		MagicLinkEmailService,
+		TwoFactorAlertEmailService,
+		WelcomeEmailService,
 		authCloudinaryProvider,
 	],
 	controllers: [AuthController],
-	exports: [AuthService, TwoFactorService, AUTH_CLOUDINARY_SERVICE],
+	exports: [
+		AuthService,
+		TwoFactorService,
+		ApprovalEmailService,
+		InvitationEmailService,
+		TwoFactorAlertEmailService,
+		AUTH_CLOUDINARY_SERVICE,
+	],
 })
 export class AuthModule {}
