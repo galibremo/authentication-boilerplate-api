@@ -21,4 +21,6 @@ export interface TwoFactorVerifyResponse {
 export interface TwoFactorDisableResponse {
 	disabled: boolean;
 	revokedOtherSessionCount: number;
+	passwordRemoved: boolean;
 }
+

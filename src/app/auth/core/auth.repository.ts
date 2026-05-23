@@ -103,6 +103,13 @@ export class AuthRepository {
 			.then(rows => rows[0]);
 	}
 
+	async removePassword(userId: number, db: AuthDbClient = this.db): Promise<void> {
+		await db
+			.update(schema.users)
+			.set({ password: null })
+			.where(eq(schema.users.id, userId));
+	}
+
 	findAccountByProvider(
 		providerId: string,
 		accountId: string,
@@ -165,4 +172,5 @@ export class AuthRepository {
 		});
 	}
 }
+
 

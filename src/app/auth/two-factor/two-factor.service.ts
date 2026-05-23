@@ -17,6 +17,7 @@ import { CryptoService } from '../../../crypto/crypto.service';
 import type { SessionSchemaType, UserSchemaType } from '../../../database/types';
 import type { UserWithoutPassword } from '../core/auth.types';
 import { SessionService } from '../session/session.service';
+import { AuthService } from '../core/auth.service';
 
 import { TwoFactorRepository } from './two-factor.repository';
 import type {
@@ -56,6 +57,7 @@ export class TwoFactorService {
 		private readonly sessionService: SessionService,
 		private readonly cryptoService: CryptoService,
 		private readonly configService: ConfigService<EnvType, true>,
+		private readonly authService: AuthService,
 	) {}
 
 	async getStatus(user: UserWithoutPassword): Promise<TwoFactorStatusResponse> {
@@ -175,7 +177,7 @@ export class TwoFactorService {
 		const userWithSecret = await this.getUserWithSecret(user.id);
 
 		if (!userWithSecret.is2faEnabled) {
-			return { disabled: true, revokedOtherSessionCount: 0 };
+			return { disabled: true, revokedOtherSessionCount: 0, passwordRemoved: false };
 		}
 
 		await this.assertSessionCanAttemptTwoFactor(session);
@@ -193,12 +195,18 @@ export class TwoFactorService {
 			await this.twoFactorRepository.deleteRecoveryCodesByUserId(user.id, tx);
 		});
 
-		const revokedOtherSessionCount = await this.sessionService.revokeOtherUserSessions(
-			user.id,
-			currentSessionToken,
-		);
+		const hadPassword = !!userWithSecret.password;
+		if (hadPassword) {
+			await this.authService.removePassword(user.id);
+		}
 
-		return { disabled: true, revokedOtherSessionCount };
+		const revokedAllSessionCount = await this.sessionService.revokeAllUserSessions(user.id);
+
+		return {
+			disabled: true,
+			revokedOtherSessionCount: revokedAllSessionCount,
+		passwordRemoved: hadPassword,
+		};
 	}
 
 	async regenerateRecoveryCodes(
@@ -331,3 +339,11 @@ export class TwoFactorService {
 		}
 	}
 }
+
+
+
+
+
+
+
+

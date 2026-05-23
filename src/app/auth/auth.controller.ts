@@ -30,8 +30,9 @@ import {
 } from '../../core/interceptors/api-response.interceptor';
 import { ZodValidationPipe } from '../../core/pipes/zod-validation.pipe';
 import { EnvType } from '../../core/validators/env';
-import { AuditLogService } from '../audit-log/audit-log.service';
 import { FILE_SIZE_LIMIT, singleFileSchema, ZodFileValidationPipe } from '../media/media.pipe';
+import { AuditLogService } from '../audit-log/audit-log.service';
+import type { UserWithoutPassword, UserWithoutPasswordResponse } from './core/auth.types';
 import { mapUserResponse } from './core/auth.mapper';
 import {
 	type GoogleLoginDto,
@@ -43,27 +44,34 @@ import {
 	type UpdateProfileDto,
 	updateProfileSchema,
 } from './core/auth.schema';
-import { AuthService } from './core/auth.service';
-import type { UserWithoutPassword, UserWithoutPasswordResponse } from './core/auth.types';
 import {
-	type ChangePasswordDto,
-	changePasswordSchema,
 	type PasswordLoginDto,
 	passwordLoginSchema,
 	type SetPasswordDto,
 	setPasswordSchema,
+	type ChangePasswordDto,
+	changePasswordSchema,
 } from './core/password.schema';
+import { AuthService } from './core/auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { PartialJwtAuthGuard } from './guards/partial-jwt-auth.guard';
 import { TwoFaRequiredGuard } from './guards/two-fa-required.guard';
-import { TwoFactorAlertEmailService } from './services/two-factor-alert-email.service';
+import { PartialJwtAuthGuard } from './guards/partial-jwt-auth.guard';
 import { mapSessionResponse } from './session/session.mapper';
-import { type SessionListQueryDto, sessionListQuerySchema } from './session/session.schema';
 import { SessionService } from './session/session.service';
-import type { SessionListResponse, SessionResponse } from './session/session.types';
-import type { PartialAuthRequest } from './strategies/jwt-partial.strategy';
-import { type TwoFactorCodeDto, twoFactorCodeSchema } from './two-factor/two-factor.schema';
+import { TwoFactorAlertEmailService } from './services/two-factor-alert-email.service';
+import {
+	type SessionListQueryDto,
+	sessionListQuerySchema,
+} from './session/session.schema';
+import type {
+	SessionListResponse,
+	SessionResponse,
+} from './session/session.types';
 import { TwoFactorService } from './two-factor/two-factor.service';
+import {
+	type TwoFactorCodeDto,
+	twoFactorCodeSchema,
+} from './two-factor/two-factor.schema';
 import type {
 	TwoFactorDisableResponse,
 	TwoFactorRecoveryCodesResponse,
@@ -71,6 +79,7 @@ import type {
 	TwoFactorStatusResponse,
 	TwoFactorVerifyResponse,
 } from './two-factor/two-factor.types';
+import type { PartialAuthRequest } from './strategies/jwt-partial.strategy';
 
 @Controller('auth')
 export class AuthController {
@@ -312,6 +321,7 @@ export class AuthController {
 				targetId: user.publicId,
 				metadata: {
 					revokedOtherSessionCount: result.revokedOtherSessionCount,
+					passwordRemoved: result.passwordRemoved,
 				},
 				request,
 			});
@@ -322,9 +332,20 @@ export class AuthController {
 				ipAddress: userDeviceInfo.ipAddress,
 				userAgent: userDeviceInfo.userAgent,
 			});
+
+			if (result.passwordRemoved) {
+				request.res?.clearCookie(
+					'access-token',
+					AppHelpers.accessTokenClearCookieConfig(this.configService),
+				);
+			}
 		}
 
-		return createApiResponse(HttpStatus.OK, 'Two-factor disabled successfully', result);
+		const message = result.passwordRemoved
+			? 'Two-factor disabled successfully. Your password has been removed and you have been logged out.'
+			: 'Two-factor disabled successfully';
+
+		return createApiResponse(HttpStatus.OK, message, result);
 	}
 
 	@UseGuards(JwtAuthGuard)
@@ -351,7 +372,9 @@ export class AuthController {
 
 	@UseGuards(JwtAuthGuard)
 	@Get('me')
-	getProfile(@CurrentUser() user: UserWithoutPassword): ApiResponse<UserWithoutPasswordResponse> {
+	getProfile(
+		@CurrentUser() user: UserWithoutPassword,
+	): ApiResponse<UserWithoutPasswordResponse> {
 		return createApiResponse(
 			HttpStatus.OK,
 			'User profile fetched successfully',
@@ -441,7 +464,6 @@ export class AuthController {
 	@UseInterceptors(
 		FileInterceptor('avatar', {
 			storage: memoryStorage(),
-			// Multer-level hard limit (fast fail before Zod, still validate in Zod too)
 			limits: { fileSize: FILE_SIZE_LIMIT },
 		}),
 	)
@@ -457,49 +479,6 @@ export class AuthController {
 			'Media uploaded successfully',
 			mapUserResponse(updatedUser),
 		);
-	}
-
-	@Post('google')
-	@HttpCode(HttpStatus.OK)
-	async googleLogin(
-		@Body(new ZodValidationPipe(googleLoginSchema)) googleLoginDto: GoogleLoginDto,
-		@Request() request: ExpressRequest,
-	): Promise<ApiResponse<UserWithoutPasswordResponse>> {
-		const googleProfile = await this.authService.verifyGoogleCredential(googleLoginDto.credential);
-		const user = await this.authService.findOrCreateGoogleUser(googleProfile);
-		const userDeviceInfo = this.sessionService.getSessionInfo(request);
-
-		await this.authService.assertCanAccessDashboard(user);
-
-		const accessToken = await this.authService.generateAccessToken({
-			userId: user.id,
-			email: user.email,
-			userAgent: userDeviceInfo.userAgent,
-			ipAddress: userDeviceInfo.ipAddress,
-			deviceName: userDeviceInfo.deviceName,
-			deviceType: userDeviceInfo.deviceType,
-		});
-
-		request.res?.cookie(
-			'access-token',
-			accessToken,
-			AppHelpers.accessTokenCookieConfig(this.configService),
-		);
-
-		await this.auditLogService.logAction({
-			actor: user,
-			action: 'LOGIN_SUCCESS',
-			targetType: 'user',
-			targetId: user.publicId,
-			metadata: {
-				method: 'google',
-				deviceName: userDeviceInfo.deviceName,
-				deviceType: userDeviceInfo.deviceType,
-			},
-			request,
-		});
-
-		return createApiResponse(HttpStatus.OK, 'Google login successful', mapUserResponse(user));
 	}
 
 	@Throttle({
@@ -600,6 +579,49 @@ export class AuthController {
 		});
 
 		return createApiResponse(HttpStatus.OK, 'Password changed successfully', null);
+	}
+
+	@Post('google')
+	@HttpCode(HttpStatus.OK)
+	async googleLogin(
+		@Body(new ZodValidationPipe(googleLoginSchema)) googleLoginDto: GoogleLoginDto,
+		@Request() request: ExpressRequest,
+	): Promise<ApiResponse<UserWithoutPasswordResponse>> {
+		const googleProfile = await this.authService.verifyGoogleCredential(googleLoginDto.credential);
+		const user = await this.authService.findOrCreateGoogleUser(googleProfile);
+		const userDeviceInfo = this.sessionService.getSessionInfo(request);
+
+		await this.authService.assertCanAccessDashboard(user);
+
+		const accessToken = await this.authService.generateAccessToken({
+			userId: user.id,
+			email: user.email,
+			userAgent: userDeviceInfo.userAgent,
+			ipAddress: userDeviceInfo.ipAddress,
+			deviceName: userDeviceInfo.deviceName,
+			deviceType: userDeviceInfo.deviceType,
+		});
+
+		request.res?.cookie(
+			'access-token',
+			accessToken,
+			AppHelpers.accessTokenCookieConfig(this.configService),
+		);
+
+		await this.auditLogService.logAction({
+			actor: user,
+			action: 'LOGIN_SUCCESS',
+			targetType: 'user',
+			targetId: user.publicId,
+			metadata: {
+				method: 'google',
+				deviceName: userDeviceInfo.deviceName,
+				deviceType: userDeviceInfo.deviceType,
+			},
+			request,
+		});
+
+		return createApiResponse(HttpStatus.OK, 'Google login successful', mapUserResponse(user));
 	}
 
 	private getSessionToken(request: ExpressRequest): string {

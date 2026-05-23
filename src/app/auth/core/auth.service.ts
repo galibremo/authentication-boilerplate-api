@@ -363,6 +363,15 @@ export class AuthService {
 		await this.authRepository.updateUser(userId, { password: hashedPassword });
 	}
 
+	async removePassword(userId: number): Promise<boolean> {
+		const existingUser = await this.authRepository.findUserById(userId);
+		if (!existingUser) throw notFoundError('user_not_found', 'User not found');
+		if (!existingUser.password) return false;
+
+		await this.authRepository.removePassword(userId);
+		return true;
+	}
+
 	async updateUserProfileImage(
 		userId: number,
 		file: Express.Multer.File,
@@ -600,6 +609,7 @@ export class AuthService {
 		};
 	}
 }
+
 
 
 
