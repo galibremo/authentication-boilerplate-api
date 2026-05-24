@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { v2 as cloudinary, UploadApiErrorResponse, UploadApiResponse } from 'cloudinary';
+import { v2 as cloudinary, type UploadApiErrorResponse, type UploadApiResponse } from 'cloudinary';
 import { Readable } from 'stream';
 
 // Configuration interface
@@ -31,6 +31,13 @@ interface UploadOptions {
 export interface UploadResult {
 	success: boolean;
 	data?: UploadApiResponse;
+	error?: string;
+}
+
+// Image details result interface
+export interface ImageDetailsResult {
+	success: boolean;
+	data?: Record<string, unknown>;
 	error?: string;
 }
 
@@ -176,7 +183,7 @@ export class CloudinaryImageService {
 		},
 	): Promise<UploadResult> {
 		try {
-			const uploadOptions: Record<string, any> = {
+			const uploadOptions: Record<string, unknown> = {
 				...this.buildUploadOptions(options),
 				faces: true, // Return face coordinates
 			};
@@ -237,8 +244,8 @@ export class CloudinaryImageService {
 	 * @param options - User provided options
 	 * @returns Cloudinary upload options
 	 */
-	private buildUploadOptions(options?: UploadOptions): Record<string, any> {
-		const defaultOptions: Record<string, any> = {
+	private buildUploadOptions(options?: UploadOptions): Record<string, unknown> {
+		const defaultOptions: Record<string, unknown> = {
 			folder: options?.folder || this.config.folder || 'uploads',
 			resource_type: 'image' as const,
 			format: 'webp', // Convert to WebP
@@ -326,9 +333,9 @@ export class CloudinaryImageService {
 	 * @param publicId - Public ID of the image
 	 * @returns Image resource details
 	 */
-	async getImageDetails(publicId: string): Promise<any> {
+	async getImageDetails(publicId: string): Promise<ImageDetailsResult> {
 		try {
-			const result = await cloudinary.api.resource(publicId);
+			const result = (await cloudinary.api.resource(publicId)) as Record<string, unknown>;
 			return { success: true, data: result };
 		} catch (error) {
 			return {

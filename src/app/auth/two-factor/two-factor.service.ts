@@ -205,7 +205,7 @@ export class TwoFactorService {
 		return {
 			disabled: true,
 			revokedOtherSessionCount: revokedAllSessionCount,
-		passwordRemoved: hadPassword,
+			passwordRemoved: hadPassword,
 		};
 	}
 
@@ -339,11 +339,3 @@ export class TwoFactorService {
 		}
 	}
 }
-
-
-
-
-
-
-
-

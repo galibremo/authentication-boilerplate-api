@@ -1,4 +1,5 @@
 import { ConfigService } from '@nestjs/config';
+import { Logger } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
@@ -72,4 +73,8 @@ async function bootstrap() {
 		logToConsole: false,
 	});
 }
-bootstrap();
+bootstrap().catch(err => {
+	const logger = new Logger('Bootstrap');
+	logger.error('Failed to start application', err);
+	process.exit(1);
+});

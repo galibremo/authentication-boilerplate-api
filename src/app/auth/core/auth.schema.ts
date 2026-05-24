@@ -19,13 +19,16 @@ export const googleLoginSchema = z
 	})
 	.strict();
 
-const magicLinkRedirectSchema = z.preprocess(value => {
-	if (Array.isArray(value)) return value[0] as unknown;
-	if (typeof value !== 'string') return undefined;
+const magicLinkRedirectSchema = z.preprocess(
+	value => {
+		if (Array.isArray(value)) return value[0] as unknown;
+		if (typeof value !== 'string') return undefined;
 
-	const trimmed = value.trim();
-	return trimmed || undefined;
-}, validateString('Redirect URL', { max: 2048 }).optional());
+		const trimmed = value.trim();
+		return trimmed || undefined;
+	},
+	validateString('Redirect URL', { max: 2048 }).optional(),
+);
 
 export const magicLinkRequestSchema = z
 	.object({

@@ -5,6 +5,9 @@ import { accessModelEnum } from './enum.model';
 export const systemSettings = pgTable('system_settings', {
 	id: serial('id').primaryKey(),
 	accessModel: accessModelEnum('access_model').default('OPEN').notNull(),
-	allowedRoles: text('allowed_roles').array().notNull().default(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'USER']),
+	allowedRoles: text('allowed_roles')
+		.array()
+		.notNull()
+		.default(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'USER']),
 	...timestamps,
 });

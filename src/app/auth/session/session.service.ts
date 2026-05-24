@@ -3,7 +3,7 @@ import type { Request } from 'express';
 import { UAParser } from 'ua-parser-js';
 
 import { notFoundError, unauthorizedError } from '../../../core/errors/domain-error';
-import { sessionRenewalThreshold, sessionTimeout } from '../../../core/helpers/constant.helpers';
+import { sessionRenewalThreshold, sessionTimeout } from '../../../core/helpers/constant.helper';
 import type { SessionSchemaType } from '../../../database/types';
 import { mapSessionResponse } from './session.mapper';
 import { SessionRepository } from './session.repository';

@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { doubleCsrf } from 'csrf-csrf';
 import type { Request, Response } from 'express';
-import AppHelpers from '../../core/helpers/app.helpers';
-import { csrfTimeout } from '../../core/helpers/constant.helpers';
+import { AppHelpers } from '../../core/helpers/app.helper';
+import { csrfTimeout } from '../../core/helpers/constant.helper';
 import { EnvType } from '../../core/validators/env';
 
 @Injectable()

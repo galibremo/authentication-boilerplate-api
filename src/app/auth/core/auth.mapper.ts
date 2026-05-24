@@ -20,7 +20,3 @@ export function mapUserResponse(user: UserWithoutPassword): UserWithoutPasswordR
 		hasPassword: user.hasPassword,
 	};
 }
-
-
-
-

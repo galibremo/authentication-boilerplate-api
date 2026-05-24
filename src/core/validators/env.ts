@@ -40,6 +40,17 @@ const integrationCredentialsSchema = z.object({
 	BREVO_SENDER_NAME: validateString('BREVO_SENDER_NAME').optional(),
 });
 
+const healthCheckSchema = z.object({
+	HEALTH_HEAP_LIMIT_MB: validateString('HEALTH_HEAP_LIMIT_MB')
+		.refine(value => !isNaN(Number(value)), 'HEALTH_HEAP_LIMIT_MB must be a number')
+		.transform(value => Number(value))
+		.default(150),
+	HEALTH_RSS_LIMIT_MB: validateString('HEALTH_RSS_LIMIT_MB')
+		.refine(value => !isNaN(Number(value)), 'HEALTH_RSS_LIMIT_MB must be a number')
+		.transform(value => Number(value))
+		.default(300),
+});
+
 export const envSchema = z
 	.object({
 		...coreEnvSchema.shape,
@@ -47,6 +58,7 @@ export const envSchema = z
 		...allSecretsEnvSchema.shape,
 		...integrationFlagsSchema.shape,
 		...integrationCredentialsSchema.shape,
+		...healthCheckSchema.shape,
 	})
 	.superRefine((data, ctx) => {
 		if (data.GOOGLE_LOGIN_ENABLED === 'true' && !data.GOOGLE_CLIENT_ID) {

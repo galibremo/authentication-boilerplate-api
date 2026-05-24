@@ -104,10 +104,7 @@ export class AuthRepository {
 	}
 
 	async removePassword(userId: number, db: AuthDbClient = this.db): Promise<void> {
-		await db
-			.update(schema.users)
-			.set({ password: null })
-			.where(eq(schema.users.id, userId));
+		await db.update(schema.users).set({ password: null }).where(eq(schema.users.id, userId));
 	}
 
 	findAccountByProvider(
@@ -145,10 +142,7 @@ export class AuthRepository {
 		await db
 			.delete(schema.verifications)
 			.where(
-				and(
-					eq(schema.verifications.identifier, identifier),
-					eq(schema.verifications.value, value),
-				),
+				and(eq(schema.verifications.identifier, identifier), eq(schema.verifications.value, value)),
 			);
 	}
 
@@ -159,11 +153,7 @@ export class AuthRepository {
 		await db.insert(schema.verifications).values(data);
 	}
 
-	findVerification(
-		identifier: string,
-		value: string,
-		db: AuthDbClient = this.db,
-	) {
+	findVerification(identifier: string, value: string, db: AuthDbClient = this.db) {
 		return db.query.verifications.findFirst({
 			where: and(
 				eq(schema.verifications.identifier, identifier),
@@ -172,5 +162,3 @@ export class AuthRepository {
 		});
 	}
 }
-
-

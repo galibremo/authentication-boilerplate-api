@@ -17,7 +17,7 @@ export class ZodValidationPipe implements PipeTransform {
 
 		// 2. Fallback: retrieve static schema from the parameter metatype (DTO class)
 		if (!schemaToUse && metadata.metatype) {
-			schemaToUse = (metadata.metatype as any).schema;
+			schemaToUse = (metadata.metatype as { schema?: z.ZodTypeAny }).schema;
 		}
 
 		// If no schema could be resolved, bypass validation

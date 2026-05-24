@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
+import type { Request } from 'express';
 import { ThrottlerGuard } from '@nestjs/throttler';
 
 @Injectable()
 export class CustomThrottlerGuard extends ThrottlerGuard {
-	protected override async getTracker(req: Record<string, any>): Promise<string> {
+	protected override async getTracker(req: Request): Promise<string> {
 		const rawIp =
-			req.headers['x-forwarded-for'] ||
-			req.headers['x-real-ip'] ||
+			(req.headers['x-forwarded-for'] as string) ||
+			(req.headers['x-real-ip'] as string) ||
 			req.ip ||
 			req.connection?.remoteAddress ||
 			'';

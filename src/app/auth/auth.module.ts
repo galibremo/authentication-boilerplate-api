@@ -3,7 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 
-import { sessionTimeout } from '../../core/helpers/constant.helpers';
+import { sessionTimeout } from '../../core/helpers/constant.helper';
 import { EnvType } from '../../core/validators/env';
 import { AuditLogModule } from '../audit-log/audit-log.module';
 import { BrevoModule } from '../brevo/brevo.module';

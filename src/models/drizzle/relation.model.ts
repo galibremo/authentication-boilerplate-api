@@ -39,12 +39,9 @@ export const twoFactorSetupsRelations = relations(twoFactorSetups, ({ one }) => 
 	}),
 }));
 
-export const twoFactorRecoveryCodesRelations = relations(
-	twoFactorRecoveryCodes,
-	({ one }) => ({
-		user: one(users, {
-			fields: [twoFactorRecoveryCodes.userId],
-			references: [users.id],
-		}),
+export const twoFactorRecoveryCodesRelations = relations(twoFactorRecoveryCodes, ({ one }) => ({
+	user: one(users, {
+		fields: [twoFactorRecoveryCodes.userId],
+		references: [users.id],
 	}),
-);
+}));

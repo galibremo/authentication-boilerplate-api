@@ -29,4 +29,3 @@ export type SystemSettingsSchemaType = InferSelectModel<typeof systemSettings>;
  * Enum Schema Types
  */
 export type RoleTypeEnum = (typeof roleTypeEnum.enumValues)[number];
-

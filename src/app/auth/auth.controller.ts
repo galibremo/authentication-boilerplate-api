@@ -23,7 +23,7 @@ import { memoryStorage } from 'multer';
 
 import { CurrentUser } from '../../core/decorators/current-user.decorator';
 import { badRequestError } from '../../core/errors/domain-error';
-import AppHelpers from '../../core/helpers/app.helpers';
+import { AppHelpers } from '../../core/helpers/app.helper';
 import {
 	type ApiResponse,
 	createApiResponse,
@@ -59,19 +59,10 @@ import { PartialJwtAuthGuard } from './guards/partial-jwt-auth.guard';
 import { mapSessionResponse } from './session/session.mapper';
 import { SessionService } from './session/session.service';
 import { TwoFactorAlertEmailService } from './services/two-factor-alert-email.service';
-import {
-	type SessionListQueryDto,
-	sessionListQuerySchema,
-} from './session/session.schema';
-import type {
-	SessionListResponse,
-	SessionResponse,
-} from './session/session.types';
+import { type SessionListQueryDto, sessionListQuerySchema } from './session/session.schema';
+import type { SessionListResponse, SessionResponse } from './session/session.types';
 import { TwoFactorService } from './two-factor/two-factor.service';
-import {
-	type TwoFactorCodeDto,
-	twoFactorCodeSchema,
-} from './two-factor/two-factor.schema';
+import { type TwoFactorCodeDto, twoFactorCodeSchema } from './two-factor/two-factor.schema';
 import type {
 	TwoFactorDisableResponse,
 	TwoFactorRecoveryCodesResponse,
@@ -372,9 +363,7 @@ export class AuthController {
 
 	@UseGuards(JwtAuthGuard)
 	@Get('me')
-	getProfile(
-		@CurrentUser() user: UserWithoutPassword,
-	): ApiResponse<UserWithoutPasswordResponse> {
+	getProfile(@CurrentUser() user: UserWithoutPassword): ApiResponse<UserWithoutPasswordResponse> {
 		return createApiResponse(
 			HttpStatus.OK,
 			'User profile fetched successfully',

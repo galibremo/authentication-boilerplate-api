@@ -5,7 +5,7 @@ import type { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
 import { unauthorizedError } from '../../../core/errors/domain-error';
-import AppHelpers from '../../../core/helpers/app.helpers';
+import { AppHelpers } from '../../../core/helpers/app.helper';
 import { EnvType } from '../../../core/validators/env';
 import { CryptoService } from '../../../crypto/crypto.service';
 import type { SessionSchemaType } from '../../../database/types';

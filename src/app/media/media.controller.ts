@@ -24,7 +24,12 @@ import type { UserWithoutPassword } from '../auth/core/auth.types';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { MediaResponseType } from './@types/media.types';
 import { FILE_SIZE_LIMIT, singleFileSchema, ZodFileValidationPipe } from './media.pipe';
-import { type MediaDto, mediaSchema, type MediaListQueryDto, mediaListQuerySchema } from './media.schema';
+import {
+	type MediaDto,
+	mediaSchema,
+	type MediaListQueryDto,
+	mediaListQuerySchema,
+} from './media.schema';
 import { MediaService } from './media.service';
 
 @Controller('media')

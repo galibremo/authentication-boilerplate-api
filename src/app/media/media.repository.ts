@@ -43,9 +43,7 @@ export class MediaRepository {
 		const pageSize = query.pageSize ?? 10;
 		const offset = (page - 1) * pageSize;
 
-		const conditions = [
-			eq(schema.media.uploadedBy, userId),
-		] as SQL<unknown>[];
+		const conditions = [eq(schema.media.uploadedBy, userId)] as SQL<unknown>[];
 
 		if (query.search) {
 			conditions.push(
@@ -71,7 +69,8 @@ export class MediaRepository {
 		}
 
 		const whereClause = and(...conditions);
-		const orderBy = orderByColumn(schema.media, query.sort, query.dir) ?? desc(schema.media.createdAt);
+		const orderBy =
+			orderByColumn(schema.media, query.sort, query.dir) ?? desc(schema.media.createdAt);
 
 		const [rows, totalRows] = await Promise.all([
 			this.db
@@ -90,10 +89,7 @@ export class MediaRepository {
 		};
 	}
 
-	async findByPublicIdForUser(
-		userId: number,
-		publicId: string,
-	): Promise<MediaResponseRow | null> {
+	async findByPublicIdForUser(userId: number, publicId: string): Promise<MediaResponseRow | null> {
 		return this.db
 			.select(this.mediaResponseSelection())
 			.from(schema.media)

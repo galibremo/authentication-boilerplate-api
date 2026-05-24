@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { HealthCheckError, HealthIndicator, HealthIndicatorResult } from '@nestjs/terminus';
+import { HealthIndicator, HealthIndicatorResult } from '@nestjs/terminus';
 import { sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
@@ -19,11 +19,9 @@ export class DrizzleHealthIndicator extends HealthIndicator {
 		try {
 			await this.db.execute(sql`SELECT 1`);
 			return this.getStatus(key, true);
-		} catch (error: any) {
-			throw new HealthCheckError(
-				'Database connection failed',
-				this.getStatus(key, false, { message: error.message }),
-			);
+		} catch (error: unknown) {
+			const message = error instanceof Error ? error.message : 'Unknown database error';
+			return this.getStatus(key, false, { message });
 		}
 	}
 }

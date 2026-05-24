@@ -1,6 +1,8 @@
 import type { UserSchemaType } from '../../../database/types';
 
-export type UserWithoutPassword = Omit<UserSchemaType, 'password' | 'twoFactorSecretEncrypted'> & { hasPassword: boolean };
+export type UserWithoutPassword = Omit<UserSchemaType, 'password' | 'twoFactorSecretEncrypted'> & {
+	hasPassword: boolean;
+};
 
 export const dashboardAccessRestrictionCodes = [
 	'account_pending_approval',
@@ -16,12 +18,7 @@ export interface DashboardAccessRestriction {
 
 export type CreateUser = Omit<
 	UserSchemaType,
-	| 'id'
-	| 'publicId'
-	| 'is2faEnabled'
-	| 'twoFactorSecretEncrypted'
-	| 'createdAt'
-	| 'updatedAt'
+	'id' | 'publicId' | 'is2faEnabled' | 'twoFactorSecretEncrypted' | 'createdAt' | 'updatedAt'
 >;
 
 // Api Response Types
@@ -54,5 +51,3 @@ export interface VerifiedGoogleProfile {
 	googleId: string;
 	emailVerified: boolean;
 }
-
-

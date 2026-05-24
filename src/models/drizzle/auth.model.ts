@@ -109,10 +109,7 @@ export const twoFactorRecoveryCodes = pgTable(
 	},
 	table => [
 		uniqueIndex('two_factor_recovery_codes_public_id_idx').on(table.publicId),
-		uniqueIndex('two_factor_recovery_codes_user_code_hash_idx').on(
-			table.userId,
-			table.codeHash,
-		),
+		uniqueIndex('two_factor_recovery_codes_user_code_hash_idx').on(table.userId, table.codeHash),
 		index('two_factor_recovery_codes_user_id_idx').on(table.userId),
 		index('two_factor_recovery_codes_used_at_idx').on(table.usedAt),
 	],

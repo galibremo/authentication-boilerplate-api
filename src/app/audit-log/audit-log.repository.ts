@@ -111,8 +111,12 @@ export class AuditLogRepository {
 			publicId: schema.auditLogs.publicId,
 			actorPublicId: schema.users.publicId,
 			actorRole: schema.auditLogs.actorRole,
-			actorName: sql<string>`coalesce(${schema.auditLogs.actorName}, ${schema.users.name})`.as('actorName'),
-			actorEmail: sql<string>`coalesce(${schema.auditLogs.actorEmail}, ${schema.users.email})`.as('actorEmail'),
+			actorName: sql<string>`coalesce(${schema.auditLogs.actorName}, ${schema.users.name})`.as(
+				'actorName',
+			),
+			actorEmail: sql<string>`coalesce(${schema.auditLogs.actorEmail}, ${schema.users.email})`.as(
+				'actorEmail',
+			),
 			action: schema.auditLogs.action,
 			targetType: schema.auditLogs.targetType,
 			targetId: schema.auditLogs.targetId,

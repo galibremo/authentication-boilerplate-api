@@ -24,19 +24,23 @@ export function extractRoutes(app: INestApplication): RouteInfo[] {
 		const controllers = discoveryService.getControllers();
 
 		controllers.forEach(wrapper => {
-			const { instance, metatype } = wrapper;
+			const instance = wrapper.instance as Record<string, unknown> | undefined;
+			const metatype = wrapper.metatype as (new (...args: never[]) => unknown) | undefined;
 			if (!instance || !metatype) return;
 
-			const controllerPath = Reflect.getMetadata(PATH_METADATA, metatype) || '';
+			const controllerPath = (Reflect.getMetadata(PATH_METADATA, metatype) as string) || '';
 			const controllerName = metatype.name || 'Unknown';
 
 			const prototype = Object.getPrototypeOf(instance) as object;
 
 			metadataScanner.scanFromPrototype(instance, prototype, (methodName: string) => {
-				const methodRef = instance[methodName as keyof typeof instance];
+				const methodRef = instance[methodName];
+				if (!methodRef) return;
 
-				const routePath = Reflect.getMetadata(PATH_METADATA, methodRef as object);
-				const requestMethod = Reflect.getMetadata(METHOD_METADATA, methodRef as object);
+				const routePath = Reflect.getMetadata(PATH_METADATA, methodRef) as string | undefined;
+				const requestMethod = Reflect.getMetadata(METHOD_METADATA, methodRef) as
+					| RequestMethod
+					| undefined;
 
 				if (routePath !== undefined && requestMethod !== undefined) {
 					const fullPath =

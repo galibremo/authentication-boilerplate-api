@@ -1,7 +1,8 @@
 import { randomInt } from 'crypto';
 import type { ConfigService } from '@nestjs/config';
 import type { CookieOptions } from 'express';
-import { sessionTimeout } from './constant.helpers';
+import type { EnvType } from '../validators/env';
+import { sessionTimeout } from './constant.helper';
 
 interface SameSiteCookieConfig {
 	sameSite: CookieOptions['sameSite'];
@@ -9,17 +10,17 @@ interface SameSiteCookieConfig {
 	domain?: string;
 }
 
-export default class AppHelpers {
+export const AppHelpers = {
 	/**
 	 * Determines if the input is an email or a username.
 	 * @param input - The user-provided input.
 	 * @returns "email" if the input is an email, "username" otherwise.
 	 */
-	static detectInputType(input: string): 'EMAIL' | 'USERNAME' {
+	detectInputType(input: string): 'EMAIL' | 'USERNAME' {
 		// Regular expression to validate email format
 		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 		return emailRegex.test(input) ? 'EMAIL' : 'USERNAME';
-	}
+	},
 
 	/**
 	 * Generates a random OTP of the specified length.
@@ -27,7 +28,7 @@ export default class AppHelpers {
 	 * @returns The generated OTP.
 	 * @throws An error if the length is less than 4.
 	 */
-	static OTPGenerator(length: number = 4): number {
+	OTPGenerator(length: number = 4): number {
 		if (length < 4) {
 			throw new Error('The OTP length must be at least 4.');
 		}
@@ -35,24 +36,24 @@ export default class AppHelpers {
 		const min = Math.pow(10, length - 1);
 		const max = Math.pow(10, length) - 1;
 		return randomInt(min, max + 1);
-	}
+	},
 
 	/**
 	 * Generate OTP expiry time.
 	 * @param expiryTime - The expiry time in minutes.
 	 * @returns The expiry time in Date format.
 	 */
-	static OTPExpiry(expiryTime: number = 5): Date {
+	OTPExpiry(expiryTime: number = 5): Date {
 		const now = new Date();
 		return new Date(now.getTime() + expiryTime * 60000);
-	}
+	},
 
 	/**
 	 * Determines the appropriate SameSite and secure settings for cookies based on environment variables.
 	 * @param configService - NestJS ConfigService instance
 	 * @returns The SameSite and secure settings for cookies.
 	 */
-	static sameSiteCookieConfig(configService: ConfigService<any, boolean>): SameSiteCookieConfig {
+	sameSiteCookieConfig(configService: ConfigService<EnvType, true>): SameSiteCookieConfig {
 		const sameSite = configService.get<CookieOptions['sameSite']>('COOKIE_SAME_SITE', 'lax');
 		const secure = configService.get<string>('COOKIE_SECURE') === 'true';
 		const domain = configService.get<string>('COOKIE_DOMAIN');
@@ -67,10 +68,10 @@ export default class AppHelpers {
 		}
 
 		return config;
-	}
+	},
 
-	static accessTokenCookieConfig(
-		configService: ConfigService<any, boolean>,
+	accessTokenCookieConfig(
+		configService: ConfigService<EnvType, true>,
 		maxAge: number = sessionTimeout,
 	): CookieOptions {
 		const cookieConfig = this.sameSiteCookieConfig(configService);
@@ -84,9 +85,9 @@ export default class AppHelpers {
 				domain: cookieConfig.domain,
 			}),
 		};
-	}
+	},
 
-	static accessTokenClearCookieConfig(configService: ConfigService<any, boolean>): CookieOptions {
+	accessTokenClearCookieConfig(configService: ConfigService<EnvType, true>): CookieOptions {
 		const cookieConfig = this.sameSiteCookieConfig(configService);
 
 		return {
@@ -97,5 +98,5 @@ export default class AppHelpers {
 				domain: cookieConfig.domain,
 			}),
 		};
-	}
-}
+	},
+} as const;

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { badGatewayError } from '../../../core/errors/domain-error';
-import { magicLinkTimeout } from '../../../core/helpers/constant.helpers';
+import { magicLinkTimeout } from '../../../core/helpers/constant.helper';
 import { BrevoService } from '../../brevo/brevo.service';
 
 interface SendMagicLinkEmailParams {
@@ -30,10 +30,7 @@ export class MagicLinkEmailService {
 				},
 			});
 		} catch {
-			throw badGatewayError(
-				'magic_link_email_failed',
-				'Failed to send magic link email',
-			);
+			throw badGatewayError('magic_link_email_failed', 'Failed to send magic link email');
 		}
 	}
 }

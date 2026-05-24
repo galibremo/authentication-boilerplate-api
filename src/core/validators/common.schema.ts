@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
-import { zodMessages } from '../helpers/message.helpers';
+import { zodMessages } from '../helpers/message.helper';
 
 // =======================
 // 🔹 Helper: Create Error Config
@@ -155,9 +155,7 @@ const baseUrl = (
 const baseUUID = (name: string) =>
 	z.uuid({
 		version: 'v4',
-		error: zodMessages.error.invalid.invalidUUID
-			? zodMessages.error.invalid.invalidUUID(name)
-			: `${name} must be a valid UUID`,
+		error: zodMessages.error.invalid.invalidUUID(name),
 	});
 
 // =======================
@@ -169,32 +167,17 @@ const baseArray = <T extends z.ZodTypeAny>(
 	opts?: { min?: number; max?: number },
 ) => {
 	let schema = z.array(itemSchema, {
-		error: () =>
-			zodMessages.error.invalid.invalidArray
-				? zodMessages.error.invalid.invalidArray(name)
-				: `${name} must be an array`,
+		error: () => zodMessages.error.invalid.invalidArray(name),
 	});
 
 	if (opts?.min)
 		schema = schema.min(opts.min, {
-			error: makeError(
-				name,
-				'limit',
-				zodMessages.error.limit.arrayMin
-					? zodMessages.error.limit.arrayMin(name, opts.min)
-					: `${name} must have at least ${opts.min} items`,
-			),
+			error: makeError(name, 'limit', zodMessages.error.limit.arrayMin(name, opts.min)),
 		});
 
 	if (opts?.max)
 		schema = schema.max(opts.max, {
-			error: makeError(
-				name,
-				'limit',
-				zodMessages.error.limit.arrayMax
-					? zodMessages.error.limit.arrayMax(name, opts.max)
-					: `${name} must have at most ${opts.max} items`,
-			),
+			error: makeError(name, 'limit', zodMessages.error.limit.arrayMax(name, opts.max)),
 		});
 
 	return schema;
@@ -205,10 +188,7 @@ const baseUnion = <T extends readonly [z.ZodTypeAny, ...z.ZodTypeAny[]]>(
 	schemas: T,
 ) =>
 	z.union(schemas, {
-		error: () =>
-			zodMessages.error.invalid.invalidUnion
-				? zodMessages.error.invalid.invalidUnion(name)
-				: `${name} must match one of the allowed types`,
+		error: () => zodMessages.error.invalid.invalidUnion(name),
 	});
 
 // =======================
@@ -247,24 +227,12 @@ export const validateEnvNumber = (
 
 	if (opts?.min !== undefined)
 		schema = schema.refine(value => value >= opts.min!, {
-			error: makeError(
-				name,
-				'limit',
-				zodMessages.error.limit.numberMin
-					? zodMessages.error.limit.numberMin(name, opts.min)
-					: `${name} must be at least ${opts.min}`,
-			),
+			error: makeError(name, 'limit', zodMessages.error.limit.numberMin(name, opts.min)),
 		});
 
 	if (opts?.max !== undefined)
 		schema = schema.refine(value => value <= opts.max!, {
-			error: makeError(
-				name,
-				'limit',
-				zodMessages.error.limit.numberMax
-					? zodMessages.error.limit.numberMax(name, opts.max)
-					: `${name} must be at most ${opts.max}`,
-			),
+			error: makeError(name, 'limit', zodMessages.error.limit.numberMax(name, opts.max)),
 		});
 
 	if (opts?.int)
@@ -357,7 +325,10 @@ const passwordRules = [
 	{ regex: /[A-Z]/, msg: (name: string) => zodMessages.error.invalid.invalidUpperCase(name) },
 	{ regex: /[a-z]/, msg: (name: string) => zodMessages.error.invalid.invalidLowerCase(name) },
 	{ regex: /\d/, msg: (name: string) => zodMessages.error.invalid.invalidNumericCase(name) },
-	{ regex: /[^A-Za-z0-9]/, msg: (name: string) => zodMessages.error.invalid.invalidSpecialCase(name) },
+	{
+		regex: /[^A-Za-z0-9]/,
+		msg: (name: string) => zodMessages.error.invalid.invalidSpecialCase(name),
+	},
 ];
 
 const passwordSchema = (name: string) =>
@@ -382,5 +353,3 @@ export const metaSeoSchema = z.object({
 	metaKeywords: baseString('Meta Keywords').optional(),
 	metaThumbnailId: validatePositiveNumber('Meta Thumbnail ID').optional(),
 });
-
-

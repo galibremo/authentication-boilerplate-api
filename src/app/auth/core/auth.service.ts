@@ -12,7 +12,7 @@ import {
 	notFoundError,
 	unauthorizedError,
 } from '../../../core/errors/domain-error';
-import { magicLinkTimeout, sessionTimeout } from '../../../core/helpers/constant.helpers';
+import { magicLinkTimeout, sessionTimeout } from '../../../core/helpers/constant.helper';
 import { EnvType } from '../../../core/validators/env';
 import { CryptoService } from '../../../crypto/crypto.service';
 import { AuditLogService } from '../../audit-log/audit-log.service';
@@ -340,10 +340,15 @@ export class AuthService {
 		return stripUserPassword(updatedUser);
 	}
 
-	async setPassword(userId: number, password: string, requireNoPassword = false): Promise<UserWithoutPassword> {
+	async setPassword(
+		userId: number,
+		password: string,
+		requireNoPassword = false,
+	): Promise<UserWithoutPassword> {
 		const existingUser = await this.authRepository.findUserById(userId);
 		if (!existingUser) throw notFoundError('user_not_found', 'User not found');
-		if (requireNoPassword && existingUser.password) throw badRequestError('Password is already set');
+		if (requireNoPassword && existingUser.password)
+			throw badRequestError('Password is already set');
 
 		const hashedPassword = await bcrypt.hash(password, 10);
 		const updatedUser = await this.authRepository.updateUser(userId, { password: hashedPassword });
@@ -351,7 +356,11 @@ export class AuthService {
 		return stripUserPassword(updatedUser);
 	}
 
-	async changePassword(userId: number, currentPassword: string, newPassword: string): Promise<void> {
+	async changePassword(
+		userId: number,
+		currentPassword: string,
+		newPassword: string,
+	): Promise<void> {
 		const existingUser = await this.authRepository.findUserById(userId);
 		if (!existingUser) throw notFoundError('user_not_found', 'User not found');
 		if (!existingUser.password) throw unauthorizedError('Password is not set');
@@ -377,7 +386,9 @@ export class AuthService {
 		file: Express.Multer.File,
 	): Promise<UserWithoutPassword> {
 		if (this.configService.get('CLOUDINARY_ENABLED') !== 'true') {
-			throw badRequestError('Profile image upload is disabled because Cloudinary is not configured.');
+			throw badRequestError(
+				'Profile image upload is disabled because Cloudinary is not configured.',
+			);
 		}
 
 		const result = await this.cloudinaryImageService.uploadWithFaceDetection(file.buffer, {
@@ -609,7 +620,3 @@ export class AuthService {
 		};
 	}
 }
-
-
-
-

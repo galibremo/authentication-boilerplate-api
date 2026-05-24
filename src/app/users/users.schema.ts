@@ -43,7 +43,7 @@ const roleQuerySchema = validateString('Role')
 const emailVerifiedQuerySchema = z
 	.preprocess(
 		value => {
-			const rawValue = Array.isArray(value) ? value[0] : value;
+			const rawValue = Array.isArray(value) ? (value[0] as unknown) : value;
 			if (typeof rawValue !== 'string') return undefined;
 
 			const normalized = rawValue.trim().toLowerCase();
@@ -56,7 +56,7 @@ const emailVerifiedQuerySchema = z
 const isApprovedQuerySchema = z
 	.preprocess(
 		value => {
-			const rawValue = Array.isArray(value) ? value[0] : value;
+			const rawValue = Array.isArray(value) ? (value[0] as unknown) : value;
 			if (typeof rawValue !== 'string') return undefined;
 
 			const normalized = rawValue.trim().toLowerCase();

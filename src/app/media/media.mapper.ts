@@ -1,7 +1,11 @@
 import type { UploadApiResponse } from 'cloudinary';
 
 import type { MediaSchemaType } from '../../database/types';
-import type { MediaDataType, MediaDeleteResponseType, MediaResponseType } from './@types/media.types';
+import type {
+	MediaDataType,
+	MediaDeleteResponseType,
+	MediaResponseType,
+} from './@types/media.types';
 
 export type MediaResponseRow = Pick<
 	MediaSchemaType,
@@ -40,9 +44,9 @@ export function mapUploadToMediaData(
 		caption: null,
 		description: null,
 		tags: upload.tags || [],
-		duration: upload.duration || null,
-		width: upload.width || null,
-		height: upload.height || null,
+		duration: typeof upload.duration === 'number' ? String(upload.duration) : null,
+		width: typeof upload.width === 'number' ? upload.width : null,
+		height: typeof upload.height === 'number' ? upload.height : null,
 	};
 }
 

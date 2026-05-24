@@ -2,7 +2,11 @@ import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import type { Request } from 'express';
 
-import { conflictError, isDatabaseUniqueViolation, notFoundError } from '../../core/errors/domain-error';
+import {
+	conflictError,
+	isDatabaseUniqueViolation,
+	notFoundError,
+} from '../../core/errors/domain-error';
 import type { UserSchemaType } from '../../database/types';
 import type { UserWithoutPassword } from '../auth/core/auth.types';
 import { ApprovalEmailService } from '../auth/services/approval-email.service';
@@ -131,7 +135,9 @@ export class UsersService {
 			await this.usersRepository.updateUser(targetUser.id, {
 				...(Object.prototype.hasOwnProperty.call(data, 'name') ? { name: data.name ?? null } : {}),
 				...(data.email ? { email: data.email } : {}),
-				...(Object.prototype.hasOwnProperty.call(data, 'phone') ? { phone: data.phone ?? null } : {}),
+				...(Object.prototype.hasOwnProperty.call(data, 'phone')
+					? { phone: data.phone ?? null }
+					: {}),
 				...(typeof data.emailVerified === 'boolean' ? { emailVerified: data.emailVerified } : {}),
 				...(typeof data.isApproved === 'boolean' ? { isApproved: data.isApproved } : {}),
 			});

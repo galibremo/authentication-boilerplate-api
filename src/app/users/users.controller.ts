@@ -133,6 +133,10 @@ export class UsersController {
 	): Promise<ApiResponse<ResetUserTwoFactorResponse>> {
 		const result = await this.usersService.resetUserTwoFactor(currentUser, id, request);
 
-		return createApiResponse(HttpStatus.OK, 'User two-factor authentication reset successfully', result);
+		return createApiResponse(
+			HttpStatus.OK,
+			'User two-factor authentication reset successfully',
+			result,
+		);
 	}
 }

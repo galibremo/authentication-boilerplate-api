@@ -11,13 +11,8 @@ import type {
 } from '../../../database/types';
 
 export type TwoFactorDatabase = NodePgDatabase<typeof schema>;
-export type TwoFactorTransaction = Parameters<
-	Parameters<TwoFactorDatabase['transaction']>[0]
->[0];
-export type TwoFactorDbClient = Pick<
-	TwoFactorDatabase,
-	'query' | 'insert' | 'update' | 'delete'
->;
+export type TwoFactorTransaction = Parameters<Parameters<TwoFactorDatabase['transaction']>[0]>[0];
+export type TwoFactorDbClient = Pick<TwoFactorDatabase, 'query' | 'insert' | 'update' | 'delete'>;
 
 @Injectable()
 export class TwoFactorRepository {
@@ -61,10 +56,7 @@ export class TwoFactorRepository {
 			.then(rows => rows[0]);
 	}
 
-	async deleteSetupByUserId(
-		userId: number,
-		db: TwoFactorDbClient = this.db,
-	): Promise<void> {
+	async deleteSetupByUserId(userId: number, db: TwoFactorDbClient = this.db): Promise<void> {
 		await db.delete(schema.twoFactorSetups).where(eq(schema.twoFactorSetups.userId, userId));
 	}
 
@@ -142,7 +134,12 @@ export class TwoFactorRepository {
 		return db
 			.update(schema.twoFactorRecoveryCodes)
 			.set({ usedAt: new Date() })
-			.where(and(eq(schema.twoFactorRecoveryCodes.id, codeId), isNull(schema.twoFactorRecoveryCodes.usedAt)))
+			.where(
+				and(
+					eq(schema.twoFactorRecoveryCodes.id, codeId),
+					isNull(schema.twoFactorRecoveryCodes.usedAt),
+				),
+			)
 			.returning()
 			.then(rows => rows[0]);
 	}

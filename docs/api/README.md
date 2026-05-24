@@ -8,8 +8,10 @@ not from `routes.json`.
 
 - [Audit Logs](audit-logs.md): admin activity history for sensitive account and access events.
 - [Auth](auth.md): magic links, Google login, logout, session management, and profile routes.
-- [Media](media.md): media upload, listing, update, and deletion routes.
 - [CSRF](csrf.md): CSRF token issuing and unsafe-method protection.
+- [Health](health.md): database connectivity and memory usage health checks.
+- [Media](media.md): media upload, listing, update, and deletion routes.
+- [System](system.md): application-level access model and role configuration.
 - [Users](users.md): admin user directory, user CRUD, role updates, and session revocation.
 
 `brevo` and `template` are internal app modules and do not expose public API routes.

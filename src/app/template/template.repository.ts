@@ -20,10 +20,7 @@ export class TemplateRepository {
 			.select()
 			.from(schema.emailTemplates)
 			.where(
-				and(
-					eq(schema.emailTemplates.key, templateKey),
-					eq(schema.emailTemplates.isActive, true),
-				),
+				and(eq(schema.emailTemplates.key, templateKey), eq(schema.emailTemplates.isActive, true)),
 			)
 			.orderBy(desc(schema.emailTemplates.version))
 			.limit(1)

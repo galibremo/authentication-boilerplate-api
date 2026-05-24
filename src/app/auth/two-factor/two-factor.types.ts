@@ -23,4 +23,3 @@ export interface TwoFactorDisableResponse {
 	revokedOtherSessionCount: number;
 	passwordRemoved: boolean;
 }
-

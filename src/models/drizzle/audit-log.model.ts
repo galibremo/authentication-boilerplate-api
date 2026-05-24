@@ -1,4 +1,14 @@
-import { index, integer, jsonb, pgTable, serial, text, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
+import {
+	index,
+	integer,
+	jsonb,
+	pgTable,
+	serial,
+	text,
+	uniqueIndex,
+	uuid,
+	varchar,
+} from 'drizzle-orm/pg-core';
 
 import { timestamps } from '../../database/helpers';
 import { users } from './auth.model';

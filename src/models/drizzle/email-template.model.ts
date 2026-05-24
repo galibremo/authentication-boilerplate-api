@@ -1,4 +1,14 @@
-import { boolean, index, integer, pgTable, serial, text, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
+import {
+	boolean,
+	index,
+	integer,
+	pgTable,
+	serial,
+	text,
+	uniqueIndex,
+	uuid,
+	varchar,
+} from 'drizzle-orm/pg-core';
 
 import { timestamps } from '../../database/helpers';
 
@@ -18,10 +28,6 @@ export const emailTemplates = pgTable(
 	table => [
 		uniqueIndex('email_templates_public_id_idx').on(table.publicId),
 		uniqueIndex('email_templates_key_version_idx').on(table.key, table.version),
-		index('email_templates_key_is_active_version_idx').on(
-			table.key,
-			table.isActive,
-			table.version,
-		),
+		index('email_templates_key_is_active_version_idx').on(table.key, table.isActive, table.version),
 	],
 );
