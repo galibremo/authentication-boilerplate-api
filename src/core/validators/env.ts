@@ -51,6 +51,45 @@ const healthCheckSchema = z.object({
 		.default(300),
 });
 
+const securityStoreSchema = z.object({
+	CACHE_STORE: validateEnum('CACHE_STORE', ['memory', 'postgres', 'redis']).default('memory'),
+	REDIS_URL: validateString('REDIS_URL').optional(),
+});
+
+const rateLimitSchema = z.object({
+	RATE_LIMIT_TTL_SECONDS: validateString('RATE_LIMIT_TTL_SECONDS')
+		.refine(value => !isNaN(Number(value)), 'RATE_LIMIT_TTL_SECONDS must be a number')
+		.transform(value => Number(value))
+		.default(60),
+	RATE_LIMIT_MAX_REQUESTS: validateString('RATE_LIMIT_MAX_REQUESTS')
+		.refine(value => !isNaN(Number(value)), 'RATE_LIMIT_MAX_REQUESTS must be a number')
+		.transform(value => Number(value))
+		.default(100),
+});
+
+const bruteForceSchema = z.object({
+	LOGIN_MAX_FAILED_ATTEMPTS: validateString('LOGIN_MAX_FAILED_ATTEMPTS')
+		.refine(value => !isNaN(Number(value)), 'LOGIN_MAX_FAILED_ATTEMPTS must be a number')
+		.transform(value => Number(value))
+		.default(5),
+	LOGIN_LOCKOUT_MINUTES: validateString('LOGIN_LOCKOUT_MINUTES')
+		.refine(value => !isNaN(Number(value)), 'LOGIN_LOCKOUT_MINUTES must be a number')
+		.transform(value => Number(value))
+		.default(15),
+});
+
+const passwordPolicySchema = z.object({
+	PASSWORD_MIN_LENGTH: validateString('PASSWORD_MIN_LENGTH')
+		.refine(value => !isNaN(Number(value)), 'PASSWORD_MIN_LENGTH must be a number')
+		.transform(value => Number(value))
+		.default(8),
+});
+
+const securityHeadersSchema = z.object({
+	HELMET_ENABLED: validateEnum('HELMET_ENABLED', ['true', 'false']).default('true'),
+	CSP_POLICY: validateString('CSP_POLICY').optional(),
+});
+
 export const envSchema = z
 	.object({
 		...coreEnvSchema.shape,
@@ -59,8 +98,21 @@ export const envSchema = z
 		...integrationFlagsSchema.shape,
 		...integrationCredentialsSchema.shape,
 		...healthCheckSchema.shape,
+		...securityStoreSchema.shape,
+		...rateLimitSchema.shape,
+		...bruteForceSchema.shape,
+		...passwordPolicySchema.shape,
+		...securityHeadersSchema.shape,
 	})
 	.superRefine((data, ctx) => {
+		if (data.CACHE_STORE === 'redis' && !data.REDIS_URL) {
+			ctx.addIssue({
+				code: 'custom',
+				message: 'REDIS_URL is required when CACHE_STORE is redis',
+				path: ['REDIS_URL'],
+			});
+		}
+
 		if (data.GOOGLE_LOGIN_ENABLED === 'true' && !data.GOOGLE_CLIENT_ID) {
 			ctx.addIssue({
 				code: 'custom',

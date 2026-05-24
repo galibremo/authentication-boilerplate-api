@@ -10,6 +10,7 @@ import { auditLogs } from '../models/drizzle/audit-log.model';
 import { emailTemplates } from '../models/drizzle/email-template.model';
 import { roleTypeEnum } from '../models/drizzle/enum.model';
 import { media } from '../models/drizzle/media.model';
+import { securityCache } from '../models/drizzle/security-store.model';
 import { systemSettings } from '../models/drizzle/system.model';
 
 /**
@@ -24,6 +25,7 @@ export type AuditLogSchemaType = InferSelectModel<typeof auditLogs>;
 export type MediaSchemaType = InferSelectModel<typeof media>;
 export type EmailTemplateSchemaType = InferSelectModel<typeof emailTemplates>;
 export type SystemSettingsSchemaType = InferSelectModel<typeof systemSettings>;
+export type SecurityCacheSchemaType = InferSelectModel<typeof securityCache>;
 
 /**
  * Enum Schema Types

@@ -350,6 +350,8 @@ export class AuthService {
 		if (requireNoPassword && existingUser.password)
 			throw badRequestError('Password is already set');
 
+		this.validatePasswordStrength(password);
+
 		const hashedPassword = await bcrypt.hash(password, 10);
 		const updatedUser = await this.authRepository.updateUser(userId, { password: hashedPassword });
 
@@ -367,6 +369,8 @@ export class AuthService {
 
 		const isCurrentValid = await bcrypt.compare(currentPassword, existingUser.password);
 		if (!isCurrentValid) throw unauthorizedError('Current password is incorrect');
+
+		this.validatePasswordStrength(newPassword);
 
 		const hashedPassword = await bcrypt.hash(newPassword, 10);
 		await this.authRepository.updateUser(userId, { password: hashedPassword });
@@ -618,5 +622,20 @@ export class AuthService {
 			user: stripUserPassword(newUser),
 			created: true,
 		};
+	}
+
+	/**
+	 * Validates password strength against the configured policy.
+	 *
+	 * The Zod schema already enforces: uppercase, lowercase, number, special char, min 8.
+	 * This method adds a runtime check for the configurable PASSWORD_MIN_LENGTH env var,
+	 * which may be set higher than the Zod default of 8.
+	 */
+	private validatePasswordStrength(password: string): void {
+		const minLength = this.configService.get('PASSWORD_MIN_LENGTH', { infer: true });
+
+		if (password.length < minLength) {
+			throw badRequestError(`Password must be at least ${minLength} characters long`);
+		}
 	}
 }

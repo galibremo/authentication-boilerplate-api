@@ -4,6 +4,7 @@ import {
 	Get,
 	HttpCode,
 	HttpStatus,
+	Inject,
 	Param,
 	ParseUUIDPipe,
 	Post,
@@ -23,6 +24,7 @@ import { memoryStorage } from 'multer';
 
 import { CurrentUser } from '../../core/decorators/current-user.decorator';
 import { badRequestError } from '../../core/errors/domain-error';
+import { BruteForceGuard } from '../../core/guards/brute-force.guard';
 import { AppHelpers } from '../../core/helpers/app.helper';
 import {
 	type ApiResponse,
@@ -30,6 +32,7 @@ import {
 } from '../../core/interceptors/api-response.interceptor';
 import { ZodValidationPipe } from '../../core/pipes/zod-validation.pipe';
 import { EnvType } from '../../core/validators/env';
+import { SECURITY_STORE_TOKEN, type ISecurityStore } from '../../core/security-store';
 import { FILE_SIZE_LIMIT, singleFileSchema, ZodFileValidationPipe } from '../media/media.pipe';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import type { UserWithoutPassword, UserWithoutPasswordResponse } from './core/auth.types';
@@ -81,6 +84,8 @@ export class AuthController {
 		private readonly auditLogService: AuditLogService,
 		private readonly twoFactorAlertEmailService: TwoFactorAlertEmailService,
 		private readonly configService: ConfigService<EnvType, true>,
+		@Inject(SECURITY_STORE_TOKEN)
+		private readonly securityStore: ISecurityStore,
 	) {}
 
 	@Throttle({
@@ -470,6 +475,7 @@ export class AuthController {
 		);
 	}
 
+	@UseGuards(BruteForceGuard)
 	@Throttle({
 		short: { limit: 3, ttl: 60000 },
 		long: { limit: 10, ttl: 300000 },
@@ -480,40 +486,56 @@ export class AuthController {
 		@Body(new ZodValidationPipe(passwordLoginSchema)) loginDto: PasswordLoginDto,
 		@Request() request: ExpressRequest,
 	): Promise<ApiResponse<UserWithoutPasswordResponse>> {
-		const user = await this.authService.validateUser(loginDto);
-		const userDeviceInfo = this.sessionService.getSessionInfo(request);
+		const ip = this.extractClientIp(request);
 
-		await this.authService.assertCanAccessDashboard(user);
+		try {
+			const user = await this.authService.validateUser(loginDto);
+			const userDeviceInfo = this.sessionService.getSessionInfo(request);
 
-		const accessToken = await this.authService.generateAccessToken({
-			userId: user.id,
-			email: user.email,
-			userAgent: userDeviceInfo.userAgent,
-			ipAddress: userDeviceInfo.ipAddress,
-			deviceName: userDeviceInfo.deviceName,
-			deviceType: userDeviceInfo.deviceType,
-		});
+			await this.authService.assertCanAccessDashboard(user);
 
-		request.res?.cookie(
-			'access-token',
-			accessToken,
-			AppHelpers.accessTokenCookieConfig(this.configService),
-		);
-
-		await this.auditLogService.logAction({
-			actor: user,
-			action: 'LOGIN_SUCCESS',
-			targetType: 'user',
-			targetId: user.publicId,
-			metadata: {
-				method: 'password',
+			const accessToken = await this.authService.generateAccessToken({
+				userId: user.id,
+				email: user.email,
+				userAgent: userDeviceInfo.userAgent,
+				ipAddress: userDeviceInfo.ipAddress,
 				deviceName: userDeviceInfo.deviceName,
 				deviceType: userDeviceInfo.deviceType,
-			},
-			request,
-		});
+			});
 
-		return createApiResponse(HttpStatus.OK, 'Login successful', mapUserResponse(user));
+			request.res?.cookie(
+				'access-token',
+				accessToken,
+				AppHelpers.accessTokenCookieConfig(this.configService),
+			);
+
+			// Clear brute-force tracking on successful login
+			await BruteForceGuard.clearFailedAttempts(this.securityStore, loginDto.email, ip);
+
+			await this.auditLogService.logAction({
+				actor: user,
+				action: 'LOGIN_SUCCESS',
+				targetType: 'user',
+				targetId: user.publicId,
+				metadata: {
+					method: 'password',
+					deviceName: userDeviceInfo.deviceName,
+					deviceType: userDeviceInfo.deviceType,
+				},
+				request,
+			});
+
+			return createApiResponse(HttpStatus.OK, 'Login successful', mapUserResponse(user));
+		} catch (error) {
+			// Record failed login attempt for brute-force tracking
+			await BruteForceGuard.recordFailedAttempt(
+				this.securityStore,
+				this.configService,
+				loginDto.email,
+				ip,
+			);
+			throw error;
+		}
 	}
 
 	@UseGuards(JwtAuthGuard, TwoFaRequiredGuard)
@@ -570,47 +592,66 @@ export class AuthController {
 		return createApiResponse(HttpStatus.OK, 'Password changed successfully', null);
 	}
 
+	@UseGuards(BruteForceGuard)
 	@Post('google')
 	@HttpCode(HttpStatus.OK)
 	async googleLogin(
 		@Body(new ZodValidationPipe(googleLoginSchema)) googleLoginDto: GoogleLoginDto,
 		@Request() request: ExpressRequest,
 	): Promise<ApiResponse<UserWithoutPasswordResponse>> {
-		const googleProfile = await this.authService.verifyGoogleCredential(googleLoginDto.credential);
-		const user = await this.authService.findOrCreateGoogleUser(googleProfile);
-		const userDeviceInfo = this.sessionService.getSessionInfo(request);
+		const ip = this.extractClientIp(request);
 
-		await this.authService.assertCanAccessDashboard(user);
+		try {
+			const googleProfile = await this.authService.verifyGoogleCredential(
+				googleLoginDto.credential,
+			);
+			const user = await this.authService.findOrCreateGoogleUser(googleProfile);
+			const userDeviceInfo = this.sessionService.getSessionInfo(request);
 
-		const accessToken = await this.authService.generateAccessToken({
-			userId: user.id,
-			email: user.email,
-			userAgent: userDeviceInfo.userAgent,
-			ipAddress: userDeviceInfo.ipAddress,
-			deviceName: userDeviceInfo.deviceName,
-			deviceType: userDeviceInfo.deviceType,
-		});
+			await this.authService.assertCanAccessDashboard(user);
 
-		request.res?.cookie(
-			'access-token',
-			accessToken,
-			AppHelpers.accessTokenCookieConfig(this.configService),
-		);
-
-		await this.auditLogService.logAction({
-			actor: user,
-			action: 'LOGIN_SUCCESS',
-			targetType: 'user',
-			targetId: user.publicId,
-			metadata: {
-				method: 'google',
+			const accessToken = await this.authService.generateAccessToken({
+				userId: user.id,
+				email: user.email,
+				userAgent: userDeviceInfo.userAgent,
+				ipAddress: userDeviceInfo.ipAddress,
 				deviceName: userDeviceInfo.deviceName,
 				deviceType: userDeviceInfo.deviceType,
-			},
-			request,
-		});
+			});
 
-		return createApiResponse(HttpStatus.OK, 'Google login successful', mapUserResponse(user));
+			request.res?.cookie(
+				'access-token',
+				accessToken,
+				AppHelpers.accessTokenCookieConfig(this.configService),
+			);
+
+			// Clear brute-force tracking on successful login
+			await BruteForceGuard.clearFailedAttempts(this.securityStore, user.email, ip);
+
+			await this.auditLogService.logAction({
+				actor: user,
+				action: 'LOGIN_SUCCESS',
+				targetType: 'user',
+				targetId: user.publicId,
+				metadata: {
+					method: 'google',
+					deviceName: userDeviceInfo.deviceName,
+					deviceType: userDeviceInfo.deviceType,
+				},
+				request,
+			});
+
+			return createApiResponse(HttpStatus.OK, 'Google login successful', mapUserResponse(user));
+		} catch (error) {
+			// Record failed login attempt for brute-force tracking (by IP only for OAuth)
+			await BruteForceGuard.recordFailedAttempt(
+				this.securityStore,
+				this.configService,
+				'oauth_attempt',
+				ip,
+			);
+			throw error;
+		}
 	}
 
 	private getSessionToken(request: ExpressRequest): string {
@@ -629,5 +670,21 @@ export class AuthController {
 		if (!request.authSession) throw badRequestError('No active session found');
 
 		return request.authSession;
+	}
+
+	private extractClientIp(request: ExpressRequest): string {
+		const forwardedFor = request.headers['x-forwarded-for'] as string | undefined;
+		const realIp = request.headers['x-real-ip'] as string | undefined;
+
+		if (forwardedFor) {
+			return forwardedFor.split(',')[0].trim();
+		}
+
+		if (realIp) {
+			return realIp.trim();
+		}
+
+		const rawIp = request.ip || request.connection?.remoteAddress || '';
+		return typeof rawIp === 'string' ? rawIp.split(',')[0].trim() : String(rawIp);
 	}
 }

@@ -11,6 +11,7 @@ import { ApiResponseInterceptor } from './core/interceptors/api-response.interce
 import { appLogger, displayStartupInfo } from './core/logging/app.logger';
 import { logAllRoutes } from './core/logging/route.logger';
 import { requestIdMiddleware } from './core/middlewares/request-id.middleware';
+import { createSecurityHeadersMiddleware } from './core/middlewares/security-headers.middleware';
 import { EnvType } from './core/validators/env';
 
 async function bootstrap() {
@@ -22,6 +23,11 @@ async function bootstrap() {
 	// Get configuration values
 	const originUrls = configService.get<string>('ORIGIN_URL', { infer: true }).split(',');
 	const port = configService.get<number>('PORT', 3000);
+
+	// Apply security headers (Helmet) — must be before other middleware
+	if (configService.get('HELMET_ENABLED', { infer: true }) === 'true') {
+		app.use(createSecurityHeadersMiddleware(configService));
+	}
 
 	app.enableCors({
 		origin: function (

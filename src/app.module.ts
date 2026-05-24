@@ -10,11 +10,12 @@ import { HealthModule } from './app/health/health.module';
 import { MediaModule } from './app/media/media.module';
 import { UsersModule } from './app/users/users.module';
 import { SystemModule } from './app/system/system.module';
-import { CustomThrottlerGuard } from './core/guards/throttler.guard';
+import { ConfigurableThrottlerGuard } from './core/guards/configurable-throttler.guard';
 import { ZodValidationPipe } from './core/pipes/zod-validation.pipe';
 import { validateEnv } from './core/validators/env';
 import { CryptoModule } from './crypto/crypto.module';
 import { DatabaseModule } from './database/database.module';
+import { SecurityStoreModule } from './core/security-store/security-store.module';
 
 @Module({
 	imports: [
@@ -22,6 +23,9 @@ import { DatabaseModule } from './database/database.module';
 			isGlobal: true,
 			validate: validateEnv,
 		}),
+		// ThrottlerModule is kept for @Throttle() and @SkipThrottle() decorator metadata.
+		// The actual rate limiting logic is handled by ConfigurableThrottlerGuard using
+		// the configurable security store (memory/postgres/redis).
 		ThrottlerModule.forRoot([
 			{
 				name: 'short',
@@ -38,6 +42,7 @@ import { DatabaseModule } from './database/database.module';
 		CryptoModule,
 		CsrfModule,
 		DatabaseModule,
+		SecurityStoreModule.forRoot(),
 		AuditLogModule,
 		AuthModule,
 		MediaModule,
@@ -49,7 +54,7 @@ import { DatabaseModule } from './database/database.module';
 	providers: [
 		{
 			provide: APP_GUARD,
-			useClass: CustomThrottlerGuard,
+			useClass: ConfigurableThrottlerGuard,
 		},
 		{
 			provide: APP_PIPE,
