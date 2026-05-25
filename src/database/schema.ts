@@ -7,6 +7,7 @@ import * as EnumSchema from '../models/drizzle/enum.model';
 import * as MediaSchema from '../models/drizzle/media.model';
 import * as RelationSchema from '../models/drizzle/relation.model';
 import * as SecurityStoreSchema from '../models/drizzle/security-store.model';
+import * as SmtpProviderSchema from '../models/drizzle/smtp-provider.model';
 import * as SystemSchema from '../models/drizzle/system.model';
 
 const schema = {
@@ -17,6 +18,7 @@ const schema = {
 	...MediaSchema,
 	...RelationSchema,
 	...SecurityStoreSchema,
+	...SmtpProviderSchema,
 	...SystemSchema,
 };
 
