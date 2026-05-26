@@ -59,6 +59,7 @@ const logger = pino({
 					ignore: 'pid,hostname',
 					singleLine: true,
 					translateTime: 'SYS:standard',
+					messageFormat: '{method} {url} {statusCode} in {responseTime}ms',
 				},
 			},
 	redact: {
@@ -69,6 +70,11 @@ const logger = pino({
 
 export const appLogger: HttpLogger<Request, Response> = pinoHttp<Request, Response>({
 	logger,
+	quietReqLogger: true,
+	serializers: {
+		req: () => undefined,
+		res: () => undefined,
+	},
 	genReqId(req) {
 		const requestId = req.requestId || getRequestId(req);
 		req.requestId = requestId;
