@@ -2,6 +2,7 @@
 
 import * as AuditLogSchema from '../models/drizzle/audit-log.model';
 import * as AuthSchema from '../models/drizzle/auth.model';
+import * as EmailLogSchema from '../models/drizzle/email-log.model';
 import * as EmailTemplateSchema from '../models/drizzle/email-template.model';
 import * as EnumSchema from '../models/drizzle/enum.model';
 import * as MediaSchema from '../models/drizzle/media.model';
@@ -13,6 +14,7 @@ import * as SystemSchema from '../models/drizzle/system.model';
 const schema = {
 	...AuditLogSchema,
 	...AuthSchema,
+	...EmailLogSchema,
 	...EmailTemplateSchema,
 	...EnumSchema,
 	...MediaSchema,

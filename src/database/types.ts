@@ -11,6 +11,7 @@ import { emailTemplates } from '../models/drizzle/email-template.model';
 import { roleTypeEnum } from '../models/drizzle/enum.model';
 import { media } from '../models/drizzle/media.model';
 import { securityCache } from '../models/drizzle/security-store.model';
+import { emailLogs } from '../models/drizzle/email-log.model';
 import { smtpProviders } from '../models/drizzle/smtp-provider.model';
 import { systemSettings } from '../models/drizzle/system.model';
 
@@ -28,6 +29,7 @@ export type EmailTemplateSchemaType = InferSelectModel<typeof emailTemplates>;
 export type SystemSettingsSchemaType = InferSelectModel<typeof systemSettings>;
 export type SecurityCacheSchemaType = InferSelectModel<typeof securityCache>;
 export type SmtpProviderSchemaType = InferSelectModel<typeof smtpProviders>;
+export type EmailLogSchemaType = InferSelectModel<typeof emailLogs>;
 
 /**
  * Enum Schema Types

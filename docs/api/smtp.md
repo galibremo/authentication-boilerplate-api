@@ -313,13 +313,252 @@ Toggles a provider's active status.
 }
 ```
 
+## `GET /smtp-providers/:id/email-logs`
+
+Lists email send attempts for a specific SMTP provider with pagination. One log entry is created per recipient for each send attempt.
+
+### Query Parameters
+
+Optional:
+- `page`: positive integer, defaults to `1`.
+- `pageSize`: positive integer, defaults to `10`, maximum `500`.
+- `toEmail`: filter by recipient email (exact match).
+- `status`: filter by status (`sent` or `failed`).
+- `templateKey`: filter by template key (e.g., `auth_magic_link`).
+- `sort`: one of `toEmail`, `status`, `templateKey`, `createdAt`.
+- `dir`: `asc` or `desc`.
+- `fromDate`: filter logs created on or after this date (ISO 8601).
+- `toDate`: filter logs created on or before this date (ISO 8601).
+
+### Example Request
+
+```http
+GET /smtp-providers/a1b2c3d4-e5f6-7890-abcd-ef1234567890/email-logs?page=1&pageSize=10&status=sent&sort=createdAt&dir=desc
+```
+
+### Example Success
+
+```json
+{
+	"statusCode": 200,
+	"message": "Email logs fetched successfully",
+	"data": {
+		"rows": [
+			{
+				"id": "log-uuid-1",
+				"smtpProviderId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+				"toEmail": "user@example.com",
+				"toName": "John Doe",
+				"subject": "Verify your email address",
+				"templateKey": "auth_magic_link",
+				"status": "sent",
+				"errorMessage": null,
+				"metadata": {},
+				"createdAt": "2026-05-26T10:00:00.000Z",
+				"updatedAt": "2026-05-26T10:00:00.000Z"
+			},
+			{
+				"id": "log-uuid-2",
+				"smtpProviderId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+				"toEmail": "user@example.com",
+				"toName": "John Doe",
+				"subject": "Verify your email address",
+				"templateKey": "auth_magic_link",
+				"status": "failed",
+				"errorMessage": "Connection refused",
+				"metadata": {},
+				"createdAt": "2026-05-26T09:55:00.000Z",
+				"updatedAt": "2026-05-26T09:55:00.000Z"
+			}
+		],
+		"total": 2,
+		"page": 1,
+		"pageSize": 10
+	},
+	"timestamp": "2026-05-26T10:05:00.000Z",
+	"path": "/smtp-providers/a1b2c3d4-e5f6-7890-abcd-ef1234567890/email-logs"
+}
+```
+
+## `GET /smtp-providers/:id/email-logs/:logId`
+
+Fetches a single email log entry by its public ID. The log must belong to the specified provider.
+
+### Example Request
+
+```http
+GET /smtp-providers/a1b2c3d4-e5f6-7890-abcd-ef1234567890/email-logs/log-uuid-1
+```
+
+### Example Success
+
+```json
+{
+	"statusCode": 200,
+	"message": "Email log fetched successfully",
+	"data": {
+		"id": "log-uuid-1",
+		"smtpProviderId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+		"toEmail": "user@example.com",
+		"toName": "John Doe",
+		"subject": "Verify your email address",
+		"templateKey": "auth_magic_link",
+		"status": "sent",
+		"errorMessage": null,
+		"metadata": {},
+		"createdAt": "2026-05-26T10:00:00.000Z",
+		"updatedAt": "2026-05-26T10:00:00.000Z"
+	},
+	"timestamp": "2026-05-26T10:05:00.000Z",
+	"path": "/smtp-providers/a1b2c3d4-e5f6-7890-abcd-ef1234567890/email-logs/log-uuid-1"
+}
+```
+
+## `GET /email-logs`
+
+Lists all email send attempts across all SMTP providers with pagination. Supports filtering by provider, recipient, status, template, and date range.
+
+### Query Parameters
+
+Optional:
+- `page`: positive integer, defaults to `1`.
+- `pageSize`: positive integer, defaults to `10`, maximum `500`.
+- `providerId`: filter by SMTP provider public ID.
+- `toEmail`: filter by recipient email (exact match).
+- `status`: filter by status (`sent` or `failed`).
+- `templateKey`: filter by template key.
+- `sort`: one of `toEmail`, `status`, `templateKey`, `createdAt`.
+- `dir`: `asc` or `desc`.
+- `fromDate`, `toDate`: date range on `createdAt`.
+
+### Example Success
+
+```json
+{
+	"statusCode": 200,
+	"message": "Email logs fetched successfully",
+	"data": {
+		"rows": [
+			{
+				"id": "log-uuid-1",
+				"smtpProviderId": "provider-uuid",
+				"toEmail": "user@example.com",
+				"toName": "John Doe",
+				"subject": "Verify your email address",
+				"templateKey": "auth_magic_link",
+				"status": "sent",
+				"errorMessage": null,
+				"metadata": {},
+				"createdAt": "2026-05-26T10:00:00.000Z",
+				"updatedAt": "2026-05-26T10:00:00.000Z"
+			}
+		],
+		"total": 1,
+		"page": 1,
+		"pageSize": 10
+	},
+	"timestamp": "2026-05-26T10:05:00.000Z",
+	"path": "/email-logs"
+}
+```
+
+## `GET /email-logs/:logId`
+
+Fetches a single email log entry by its public ID.
+
+### Example Success
+
+```json
+{
+	"statusCode": 200,
+	"message": "Email log fetched successfully",
+	"data": {
+		"id": "log-uuid-1",
+		"smtpProviderId": "provider-uuid",
+		"toEmail": "user@example.com",
+		"toName": "John Doe",
+		"subject": "Verify your email address",
+		"templateKey": "auth_magic_link",
+		"status": "sent",
+		"errorMessage": null,
+		"metadata": {},
+		"createdAt": "2026-05-26T10:00:00.000Z",
+		"updatedAt": "2026-05-26T10:00:00.000Z"
+	},
+	"timestamp": "2026-05-26T10:05:00.000Z",
+	"path": "/email-logs/log-uuid-1"
+}
+```
+
+## `POST /email-logs/:logId/resend`
+
+Re-sends the email from a log entry. Only works for template-based emails (logs with a `templateKey`). Creates a new log entry for the resend attempt.
+
+### Example Success
+
+```json
+{
+	"statusCode": 200,
+	"message": "Email resent successfully",
+	"data": {
+		"id": "log-uuid-2",
+		"smtpProviderId": "provider-uuid",
+		"toEmail": "user@example.com",
+		"toName": "John Doe",
+		"subject": "Verify your email address",
+		"templateKey": "auth_magic_link",
+		"status": "sent",
+		"errorMessage": null,
+		"metadata": {},
+		"createdAt": "2026-05-26T10:10:00.000Z",
+		"updatedAt": "2026-05-26T10:10:00.000Z"
+	},
+	"timestamp": "2026-05-26T10:10:00.000Z",
+	"path": "/email-logs/log-uuid-1/resend"
+}
+```
+
+### Example Failure (raw email)
+
+```json
+{
+	"statusCode": 502,
+	"code": "cannot_resend_raw_email",
+	"error": "Bad Gateway",
+	"message": "Cannot resend: no template associated with this email",
+	"meta": {},
+	"timestamp": "2026-05-26T10:10:00.000Z",
+	"path": "/email-logs/log-uuid-1/resend",
+	"requestId": "req_123"
+}
+```
+
+## `DELETE /email-logs/:logId`
+
+Deletes a single email log entry. Does not affect the original email that was sent.
+
+### Example Success
+
+```json
+{
+	"statusCode": 200,
+	"message": "Email log deleted successfully",
+	"data": {
+		"deleted": true
+	},
+	"timestamp": "2026-05-26T10:15:00.000Z",
+	"path": "/email-logs/log-uuid-1"
+}
+```
+
 ## Errors
 
 Validation errors use `code: "validation_failed"`. Missing or invalid auth uses `unauthorized`.
 Insufficient role uses `forbidden`. Missing target providers use `smtp_provider_not_found`.
 Deleting the only active provider uses `cannot_delete_last_active_provider`. Setting an inactive
 provider as default uses `cannot_set_inactive_default`. All provider send failures use
-`email_send_failed` with a `failures` array in `meta`.
+`email_send_failed` with a `failures` array in `meta`. Missing email logs use `email_log_not_found`.
+Resend failures use `cannot_resend_raw_email` (no template) or `email_resend_failed` (send error).
 
 ```json
 {

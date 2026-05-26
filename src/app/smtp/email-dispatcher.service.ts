@@ -2,13 +2,15 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { badGatewayError } from '../../core/errors/domain-error';
 import { CryptoService } from '../../crypto/crypto.service';
+import type { SmtpProviderSchemaType } from '../../database/types';
 import { TemplateService } from '../template/template.service';
+import { EmailLogsService } from '../email-logs/email-logs.service';
 import type { EmailProvider, SendEmailParams } from './interfaces/email-provider.interface';
-import { SmtpProvidersService } from './smtp-providers.service';
-import { BrevoProvider } from './providers/brevo.provider';
-import { ResendProvider } from './providers/resend.provider';
-import { NodemailerProvider } from './providers/nodemailer.provider';
 import { AwsSesProvider } from './providers/aws-ses.provider';
+import { BrevoProvider } from './providers/brevo.provider';
+import { NodemailerProvider } from './providers/nodemailer.provider';
+import { ResendProvider } from './providers/resend.provider';
+import { SmtpProvidersService } from './smtp-providers.service';
 
 @Injectable()
 export class EmailDispatcherService {
@@ -20,6 +22,7 @@ export class EmailDispatcherService {
 		private readonly smtpProvidersService: SmtpProvidersService,
 		private readonly cryptoService: CryptoService,
 		private readonly templateService: TemplateService,
+		private readonly emailLogsService: EmailLogsService,
 	) {
 		this.providers = new Map<string, EmailProvider>();
 		this.registerProvider(new BrevoProvider());
@@ -32,7 +35,7 @@ export class EmailDispatcherService {
 		this.providers.set(provider.type, provider);
 	}
 
-	async sendEmail(params: SendEmailParams): Promise<void> {
+	async sendEmail(params: SendEmailParams, templateKey?: string): Promise<void> {
 		const activeProviders = await this.smtpProvidersService.getAllActiveProviders();
 
 		if (activeProviders.length === 0) {
@@ -44,9 +47,7 @@ export class EmailDispatcherService {
 
 		for (const providerRecord of activeProviders) {
 			try {
-				const decryptedConfig = JSON.parse(
-					this.cryptoService.decrypt(providerRecord.config),
-				);
+				const decryptedConfig = JSON.parse(this.cryptoService.decrypt(providerRecord.config));
 
 				const provider = this.providers.get(providerRecord.providerType);
 				if (!provider) {
@@ -60,6 +61,8 @@ export class EmailDispatcherService {
 				this.logger.log(
 					`[EmailDispatcher] Email sent successfully via "${providerRecord.name}" (${providerRecord.providerType})`,
 				);
+
+				await this.logSendResults(providerRecord, params, templateKey, 'sent');
 				return;
 			} catch (error) {
 				const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -71,6 +74,8 @@ export class EmailDispatcherService {
 				this.logger.warn(
 					`[EmailDispatcher] Provider "${providerRecord.name}" (${providerRecord.providerType}) failed: ${errorMessage}`,
 				);
+
+				await this.logSendResults(providerRecord, params, templateKey, 'failed', errorMessage);
 			}
 		}
 
@@ -90,16 +95,39 @@ export class EmailDispatcherService {
 	}): Promise<void> {
 		const rendered = await this.templateService.render(params.templateKey, params.params);
 
-		await this.sendEmail({
-			to: params.to,
-			subject: rendered.subject,
-			htmlContent: rendered.html,
-			textContent: rendered.text,
-			replyTo: params.replyTo,
-			headers: {
-				...params.headers,
-				'X-Template-Version': String(rendered.version),
+		await this.sendEmail(
+			{
+				to: params.to,
+				subject: rendered.subject,
+				htmlContent: rendered.html,
+				textContent: rendered.text,
+				replyTo: params.replyTo,
+				headers: {
+					...params.headers,
+					'X-Template-Version': String(rendered.version),
+				},
 			},
-		});
+			params.templateKey,
+		);
+	}
+
+	private async logSendResults(
+		providerRecord: SmtpProviderSchemaType,
+		params: SendEmailParams,
+		templateKey: string | undefined,
+		status: 'sent' | 'failed',
+		errorMessage?: string,
+	): Promise<void> {
+		for (const recipient of params.to) {
+			await this.emailLogsService.createLog({
+				smtpProviderId: providerRecord.id,
+				toEmail: recipient.email,
+				toName: recipient.name,
+				subject: params.subject,
+				templateKey,
+				status,
+				errorMessage,
+			});
+		}
 	}
 }
