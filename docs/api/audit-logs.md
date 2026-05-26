@@ -4,6 +4,49 @@ Admin-only activity history for sensitive account and access events.
 
 All routes require the `access-token` HTTP-only cookie and the caller must have an admin role.
 
+## `GET /audit-logs/filter-options`
+
+Returns distinct audit log actions and target types currently present in the database. Used to
+populate filter dropdowns in the audit logs UI.
+
+### Query Parameters
+
+None.
+
+### Example Request
+
+```http
+GET /audit-logs/filter-options
+```
+
+### Example Success
+
+```json
+{
+	"statusCode": 200,
+	"message": "Audit log filter options fetched successfully",
+	"data": {
+		"actions": [
+			"2FA_DISABLED",
+			"2FA_ENABLED",
+			"2FA_RESET",
+			"LOGIN_SUCCESS",
+			"ROLE_UPDATED",
+			"USER_CREATED",
+			"USER_DELETED",
+			"USER_PROVISIONED",
+			"USER_SESSIONS_REVOKED",
+			"USER_UPDATED"
+		],
+		"targetTypes": ["user"]
+	},
+	"timestamp": "2026-05-17T10:05:00.000Z",
+	"path": "/audit-logs/filter-options"
+}
+```
+
+Arrays are sorted alphabetically. Empty arrays are returned when no audit logs exist.
+
 ## `GET /audit-logs`
 
 Lists audit log entries newest-first by default. Public responses expose public UUIDs only.

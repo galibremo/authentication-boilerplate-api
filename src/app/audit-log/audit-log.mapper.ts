@@ -39,6 +39,11 @@ export interface AuditLogListResponse {
 	pageSize: number;
 }
 
+export interface AuditLogFilterOptionsResponse {
+	actions: string[];
+	targetTypes: string[];
+}
+
 export function mapAuditLogResponse(row: AuditLogRow): AuditLogResponse {
 	return {
 		id: row.publicId,

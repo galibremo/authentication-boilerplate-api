@@ -82,6 +82,24 @@ export class AuditLogRepository {
 		};
 	}
 
+	async getDistinctActions(): Promise<string[]> {
+		const results = await this.db
+			.selectDistinct({ action: schema.auditLogs.action })
+			.from(schema.auditLogs)
+			.orderBy(schema.auditLogs.action);
+
+		return results.map(row => row.action);
+	}
+
+	async getDistinctTargetTypes(): Promise<string[]> {
+		const results = await this.db
+			.selectDistinct({ targetType: schema.auditLogs.targetType })
+			.from(schema.auditLogs)
+			.orderBy(schema.auditLogs.targetType);
+
+		return results.map(row => row.targetType);
+	}
+
 	private getListWhere(query: AuditLogListQueryDto): SQL<unknown> | undefined {
 		const fromDate = query.fromDate ? new Date(query.fromDate) : undefined;
 		const toDate = query.toDate ? new Date(query.toDate) : undefined;

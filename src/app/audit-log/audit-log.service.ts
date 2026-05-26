@@ -3,7 +3,7 @@ import type { Request } from 'express';
 
 import type { RoleTypeEnum } from '../../database/types';
 import type { UserWithoutPassword } from '../auth/core/auth.types';
-import { type AuditLogListResponse, mapAuditLogResponse } from './audit-log.mapper';
+import { type AuditLogFilterOptionsResponse, type AuditLogListResponse, mapAuditLogResponse } from './audit-log.mapper';
 import { AuditLogRepository } from './audit-log.repository';
 import type { AuditLogListQueryDto } from './audit-log.schema';
 
@@ -79,6 +79,15 @@ export class AuditLogService {
 			page: logs.page,
 			pageSize: logs.pageSize,
 		};
+	}
+
+	async getFilterOptions(): Promise<AuditLogFilterOptionsResponse> {
+		const [actions, targetTypes] = await Promise.all([
+			this.auditLogRepository.getDistinctActions(),
+			this.auditLogRepository.getDistinctTargetTypes(),
+		]);
+
+		return { actions, targetTypes };
 	}
 
 	private getRequestContext(request?: Request): {
