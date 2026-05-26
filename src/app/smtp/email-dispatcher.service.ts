@@ -3,7 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { badGatewayError } from '../../core/errors/domain-error';
 import { CryptoService } from '../../crypto/crypto.service';
 import type { SmtpProviderSchemaType } from '../../database/types';
-import { TemplateService } from '../template/template.service';
+import { EmailTemplateService } from '../email-template/email-template.service';
 import { EmailLogsService } from '../email-logs/email-logs.service';
 import type { EmailProvider, SendEmailParams } from './interfaces/email-provider.interface';
 import { AwsSesProvider } from './providers/aws-ses.provider';
@@ -21,7 +21,7 @@ export class EmailDispatcherService {
 	constructor(
 		private readonly smtpProvidersService: SmtpProvidersService,
 		private readonly cryptoService: CryptoService,
-		private readonly templateService: TemplateService,
+		private readonly templateService: EmailTemplateService,
 		private readonly emailLogsService: EmailLogsService,
 	) {
 		this.providers = new Map<string, EmailProvider>();
