@@ -41,6 +41,9 @@ export interface ISecurityStore {
 	/** Set a lockout for a key with the given TTL. */
 	setLockout(key: string, ttlMs: number): Promise<void>;
 
+	/** Delete a lockout key. */
+	deleteLockout(key: string): Promise<void>;
+
 	/** Clean up expired entries. Implementation-specific. */
 	cleanup(): Promise<void>;
 

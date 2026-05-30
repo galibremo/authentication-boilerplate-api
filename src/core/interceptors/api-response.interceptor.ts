@@ -71,13 +71,13 @@ export class ApiResponseInterceptor<T> implements NestInterceptor<T, ApiResponse
 					'message' in data &&
 					'timestamp' in data
 				) {
-					const response = data as Partial<ApiResponse<T>>;
+					const apiResponse = data as Partial<ApiResponse<T>>;
 					return {
-						statusCode: response.statusCode!,
-						message: response.message!,
-						data: response.data,
-						pagination: response.pagination,
-						timestamp: response.timestamp!,
+						statusCode: apiResponse.statusCode!,
+						message: apiResponse.message!,
+						data: apiResponse.data,
+						pagination: apiResponse.pagination,
+						timestamp: apiResponse.timestamp!,
 						path: request.url,
 					};
 				}

@@ -15,7 +15,9 @@ export const cookieEnvSchema = z.object({
 
 const coreEnvSchema = z.object({
 	DATABASE_URL: validateString('DATABASE_URL'),
-	PORT: validateString('PORT').refine(value => !isNaN(Number(value)), 'PORT must be a number'),
+	PORT: validateString('PORT')
+		.refine(value => !isNaN(Number(value)), 'PORT must be a number')
+		.transform(value => Number(value)),
 	NODE_ENV: validateEnum('NODE_ENV', ['development', 'production']).default('development'),
 	ORIGIN_URL: validateString('ORIGIN_URL'),
 	API_URL: validateString('API_URL'),
@@ -49,6 +51,7 @@ const healthCheckSchema = z.object({
 const securityStoreSchema = z.object({
 	CACHE_STORE: validateEnum('CACHE_STORE', ['memory', 'postgres', 'redis']).default('memory'),
 	REDIS_URL: validateString('REDIS_URL').optional(),
+	TRUST_PROXY: validateEnum('TRUST_PROXY', ['true', 'false']).default('false'),
 });
 
 const rateLimitSchema = z.object({
@@ -84,6 +87,30 @@ const securityHeadersSchema = z.object({
 	HELMET_ENABLED: validateEnum('HELMET_ENABLED', ['true', 'false']).default('true'),
 	CSP_POLICY: validateString('CSP_POLICY').optional(),
 });
+
+const schemas = [
+	coreEnvSchema,
+	cookieEnvSchema,
+	allSecretsEnvSchema,
+	integrationFlagsSchema,
+	integrationCredentialsSchema,
+	healthCheckSchema,
+	securityStoreSchema,
+	rateLimitSchema,
+	bruteForceSchema,
+	passwordPolicySchema,
+	securityHeadersSchema,
+];
+
+const seenKeys = new Set<string>();
+for (const schema of schemas) {
+	for (const key of Object.keys(schema.shape)) {
+		if (seenKeys.has(key)) {
+			throw new Error(`Duplicate env schema key: ${key}`);
+		}
+		seenKeys.add(key);
+	}
+}
 
 export const envSchema = z
 	.object({
@@ -150,7 +177,7 @@ export function validateEnv(config: Record<string, unknown>): EnvType {
 	if (!result.success) {
 		const errorMessages = result.error.issues.map(e => e.message).join('\n');
 		console.error(`\x1b[31mEnvironment validation failed:\n${errorMessages}\x1b[0m`);
-		throw new Error('Environment validation failed');
+		throw new Error(`Environment validation failed:\n${errorMessages}`);
 	}
 
 	return result.data;

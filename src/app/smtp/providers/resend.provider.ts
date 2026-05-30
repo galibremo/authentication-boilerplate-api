@@ -1,4 +1,4 @@
-import { Resend } from 'resend';
+import { Resend, type CreateEmailOptions } from 'resend';
 
 import { badGatewayError } from '../../../core/errors/domain-error';
 import type {
@@ -33,8 +33,8 @@ export class ResendProvider implements EmailProvider {
 								: params.replyTo.email,
 						}
 					: {}),
-				...(params.headers ? { headers: params.headers } : {}),
-			} as any);
+			...(params.headers ? { headers: params.headers } : {}),
+		} as CreateEmailOptions);
 
 			if (error) {
 				throw badGatewayError(

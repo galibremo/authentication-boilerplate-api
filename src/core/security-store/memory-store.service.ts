@@ -19,10 +19,10 @@ export class MemorySecurityStore implements ISecurityStore, OnModuleDestroy {
 	private readonly cleanupInterval: ReturnType<typeof setInterval>;
 
 	constructor() {
-		// Clean up expired entries every 60 seconds
 		this.cleanupInterval = setInterval(() => {
 			this.cleanupSync();
 		}, 60_000);
+		this.cleanupInterval.unref();
 	}
 
 	increment(key: string, ttlMs: number): Promise<number> {
@@ -31,7 +31,7 @@ export class MemorySecurityStore implements ISecurityStore, OnModuleDestroy {
 
 		if (existing && (!existing.expiresAt || existing.expiresAt > now)) {
 			const newValue = Number(existing.value) + 1;
-			this.store.set(key, { value: String(newValue), expiresAt: now + ttlMs });
+			this.store.set(key, { value: String(newValue), expiresAt: existing.expiresAt });
 			return Promise.resolve(newValue);
 		}
 
@@ -89,6 +89,10 @@ export class MemorySecurityStore implements ISecurityStore, OnModuleDestroy {
 
 	async setLockout(key: string, ttlMs: number): Promise<void> {
 		await this.set(key, 'locked', ttlMs);
+	}
+
+	async deleteLockout(key: string): Promise<void> {
+		await this.delete(key);
 	}
 
 	cleanup(): Promise<void> {

@@ -38,10 +38,24 @@ export function displayStartupInfo(port: number | string): void {
 	console.log('\n');
 }
 
+const REQUEST_ID_REGEX = /^[a-zA-Z0-9-]+$/;
+const MAX_REQUEST_ID_LENGTH = 64;
+
 function getRequestId(req: Request): string {
 	const header = req.headers['x-request-id'];
-	if (typeof header === 'string' && header.trim()) return header;
-	if (Array.isArray(header) && header[0]) return header[0];
+	if (
+		typeof header === 'string' &&
+		header.length <= MAX_REQUEST_ID_LENGTH &&
+		REQUEST_ID_REGEX.test(header.trim())
+	) {
+		return header.trim();
+	}
+	if (Array.isArray(header) && header[0]) {
+		const first = header[0];
+		if (first.length <= MAX_REQUEST_ID_LENGTH && REQUEST_ID_REGEX.test(first.trim())) {
+			return first.trim();
+		}
+	}
 
 	return req.requestId || randomUUID();
 }

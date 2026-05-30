@@ -41,27 +41,25 @@ export class SecurityStoreModule {
 						configService: ConfigService<EnvType, true>,
 						memory: MemorySecurityStore,
 						postgres: PostgresSecurityStore,
+						redis: RedisSecurityStore,
 					): ISecurityStore => {
 						const store = configService.get('CACHE_STORE', { infer: true });
 
 						switch (store) {
 							case 'postgres':
 								return postgres;
-							case 'redis': {
-								// RedisSecurityStore is created directly here so it is
-								// only instantiated when CACHE_STORE=redis. This avoids
-								// throwing on startup when REDIS_URL is not configured.
-								return new RedisSecurityStore(configService);
-							}
+							case 'redis':
+								return redis;
 							case 'memory':
 							default:
 								return memory;
 						}
 					},
-					inject: [ConfigService, MemorySecurityStore, PostgresSecurityStore],
+					inject: [ConfigService, MemorySecurityStore, PostgresSecurityStore, RedisSecurityStore],
 				},
 				MemorySecurityStore,
 				PostgresSecurityStore,
+				RedisSecurityStore,
 			],
 			exports: [SECURITY_STORE_TOKEN],
 		};

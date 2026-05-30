@@ -12,8 +12,8 @@ import { Request, Response } from 'express';
 type ExceptionResponse = Record<string, unknown>;
 
 @Catch()
-export class HttpExceptionFilter implements ExceptionFilter {
-	private readonly logger = new Logger(HttpExceptionFilter.name);
+export class GlobalExceptionFilter implements ExceptionFilter {
+	private readonly logger = new Logger(GlobalExceptionFilter.name);
 	private readonly sensitiveFields = new Set([
 		'authorization',
 		'cookie',

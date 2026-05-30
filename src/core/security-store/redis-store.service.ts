@@ -25,12 +25,9 @@ export class RedisSecurityStore implements ISecurityStore, OnModuleDestroy {
 
 	constructor(configService: ConfigService<EnvType, true>) {
 		const redisUrl = configService.get('REDIS_URL', { infer: true });
-		if (!redisUrl) {
-			throw new Error('REDIS_URL is required when CACHE_STORE=redis');
-		}
 
-		this.client = new Redis(redisUrl, {
-			lazyConnect: false,
+		this.client = new Redis(redisUrl || 'redis://localhost:6379', {
+			lazyConnect: !redisUrl,
 			maxRetriesPerRequest: 3,
 			retryStrategy: times => {
 				if (times > 5) {
@@ -139,18 +136,22 @@ export class RedisSecurityStore implements ISecurityStore, OnModuleDestroy {
 		await this.client.set(prefixedKey, 'locked', 'EX', ttlSeconds);
 	}
 
+	async deleteLockout(key: string): Promise<void> {
+		const prefixedKey = `${KEY_PREFIXES.lockout}${key}`;
+		await this.client.del(prefixedKey);
+	}
+
 	async cleanup(): Promise<void> {
 		// Redis handles expiry automatically via TTL; no manual cleanup needed.
 	}
 
-	onModuleDestroy(): void {
-		void this.client.quit().catch(err => {
+	async onModuleDestroy(): Promise<void> {
+		await this.client.quit().catch(err => {
 			this.logger.warn('Error disconnecting from Redis', err);
 		});
 	}
 
-	shutdown(): Promise<void> {
-		this.onModuleDestroy();
-		return Promise.resolve();
+	async shutdown(): Promise<void> {
+		await this.onModuleDestroy();
 	}
 }

@@ -26,18 +26,17 @@ export class PostgresSecurityStore implements ISecurityStore, OnModuleDestroy {
 		@Inject(DATABASE_CONNECTION)
 		private readonly db: SecurityDb,
 	) {
-		// Clean up expired entries every 5 minutes
 		this.cleanupInterval = setInterval(() => {
 			this.cleanup().catch(err => {
 				this.logger.warn('Failed to cleanup expired security cache entries', err);
 			});
 		}, 5 * 60_000);
+		this.cleanupInterval.unref();
 	}
 
 	async increment(key: string, ttlMs: number): Promise<number> {
 		const expiresAt = new Date(Date.now() + ttlMs);
 
-		// Atomic upsert: insert or increment existing value
 		const result = await this.db
 			.insert(schema.securityCache)
 			.values({
@@ -53,13 +52,9 @@ export class PostgresSecurityStore implements ISecurityStore, OnModuleDestroy {
 						THEN (${schema.securityCache.value}::int + 1)::text
 						ELSE '1'
 					END`,
-					expiresAt,
 				},
 			})
 			.returning({ value: schema.securityCache.value });
-
-		// Lazy cleanup of expired entries
-		void this.cleanupExpired();
 
 		return Number(result[0]?.value ?? 1);
 	}
@@ -71,7 +66,7 @@ export class PostgresSecurityStore implements ISecurityStore, OnModuleDestroy {
 			.where(
 				and(
 					eq(schema.securityCache.key, key),
-					or(
+					orCondition(
 						sql`${schema.securityCache.expiresAt} IS NULL`,
 						gt(schema.securityCache.expiresAt, new Date()),
 					),
@@ -92,8 +87,6 @@ export class PostgresSecurityStore implements ISecurityStore, OnModuleDestroy {
 				target: schema.securityCache.key,
 				set: { value, expiresAt },
 			});
-
-		void this.cleanupExpired();
 	}
 
 	async delete(key: string): Promise<void> {
@@ -126,6 +119,10 @@ export class PostgresSecurityStore implements ISecurityStore, OnModuleDestroy {
 		await this.set(key, 'locked', ttlMs);
 	}
 
+	async deleteLockout(key: string): Promise<void> {
+		await this.delete(key);
+	}
+
 	async cleanup(): Promise<void> {
 		await this.cleanupExpired();
 	}
@@ -155,7 +152,6 @@ export class PostgresSecurityStore implements ISecurityStore, OnModuleDestroy {
 	}
 }
 
-// Helper: OR condition for Drizzle
-function or(...conditions: ReturnType<typeof sql>[]): ReturnType<typeof sql> {
+function orCondition(...conditions: ReturnType<typeof sql>[]): ReturnType<typeof sql> {
 	return sql`(${sql.join(conditions, sql` OR `)})`;
 }

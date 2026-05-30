@@ -88,8 +88,7 @@ function parseCspString(csp: string): Record<string, string[]> {
 		if (!trimmed) continue;
 
 		const [directive, ...values] = trimmed.split(/\s+/);
-		if (directive && values.length > 0) {
-			// Convert kebab-case directive names to camelCase for Helmet
+		if (directive) {
 			const camelDirective = directive.replace(/-([a-z])/g, (_match: string, char: string) =>
 				char.toUpperCase(),
 			);

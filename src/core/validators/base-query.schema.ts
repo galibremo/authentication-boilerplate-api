@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { validateEnum, validatePositiveNumber, validateString } from './common.schema';
+import { validateDate, validateEnum, validatePositiveInteger, validateString } from './common.schema';
 
 export type SortableField = { name: string; queryName: string };
 
@@ -14,8 +14,8 @@ export const baseQuerySchema = (sortableFields: readonly SortableField[]) => {
 
 	return z
 		.object({
-			page: validatePositiveNumber('Page').optional(),
-			pageSize: validatePositiveNumber('Page Size')
+			page: validatePositiveInteger('Page').optional(),
+			pageSize: validatePositiveInteger('Page Size')
 				.max(500, 'Page Size must not exceed 500')
 				.optional(),
 			sort: validateEnum('Sort By', sortValues)
@@ -23,8 +23,8 @@ export const baseQuerySchema = (sortableFields: readonly SortableField[]) => {
 				.transform((val: string | undefined) => getSortField(val)), // Transform directly here
 			dir: validateEnum('Sort Order', ['asc', 'desc']).optional(),
 			search: validateString('Search').optional(),
-			fromDate: validateString('From Date').optional(),
-			toDate: validateString('To Date').optional(),
+			fromDate: validateDate('From Date').optional(),
+			toDate: validateDate('To Date').optional(),
 		})
 		.refine(data => !data.fromDate || !data.toDate || data.fromDate <= data.toDate, {
 			message: 'fromDate must be less than or equal to toDate',

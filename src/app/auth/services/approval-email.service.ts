@@ -22,13 +22,15 @@ export class ApprovalEmailService {
 
 	async sendApprovalEmail(params: SendApprovalEmailParams): Promise<void> {
 		try {
+			const appUrl = this.configService.get('APP_URL', { infer: true });
+
 			await this.emailDispatcher.sendFromTemplate({
 				templateKey: TEMPLATE_KEYS.AUTH_ACCOUNT_APPROVAL,
 				to: [{ email: params.email, name: params.name ?? undefined }],
 				params: {
 					name: params.name ?? 'there',
 					approvedByName: params.approvedByName ?? 'an administrator',
-					appUrl: this.configService.get('APP_URL', { infer: true }) as string,
+					appUrl,
 					year: new Date().getFullYear(),
 				},
 			});

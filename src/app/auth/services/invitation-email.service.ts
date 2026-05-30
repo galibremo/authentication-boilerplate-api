@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import type { RoleTypeEnum } from '../../../database/types';
 import type { EnvType } from '../../../core/validators/env';
+import type { RoleTypeEnum } from '../../../database/types';
 import { TEMPLATE_KEYS } from '../../email-template/email-template.registry';
 import { EmailDispatcherService } from '../../smtp/email-dispatcher.service';
 
@@ -24,6 +24,8 @@ export class InvitationEmailService {
 
 	async sendInvitationEmail(params: SendInvitationEmailParams): Promise<void> {
 		try {
+			const appUrl = this.configService.get('APP_URL', { infer: true });
+
 			await this.emailDispatcher.sendFromTemplate({
 				templateKey: TEMPLATE_KEYS.AUTH_INVITATION,
 				to: [{ email: params.email, name: params.name ?? undefined }],
@@ -31,7 +33,7 @@ export class InvitationEmailService {
 					name: params.name ?? 'there',
 					role: params.role,
 					createdByName: params.createdByName ?? 'an administrator',
-					appUrl: this.configService.get('APP_URL', { infer: true }) as string,
+					appUrl,
 					year: new Date().getFullYear(),
 				},
 			});

@@ -6,7 +6,7 @@ import { AppModule } from './app.module';
 
 import { CsrfGuard } from './app/csrf/csrf.guard';
 import { CsrfService } from './app/csrf/csrf.service';
-import { HttpExceptionFilter } from './core/filters/http-exception.filter';
+import { GlobalExceptionFilter } from './core/filters/http-exception.filter';
 import { ApiResponseInterceptor } from './core/interceptors/api-response.interceptor';
 import { appLogger, displayStartupInfo } from './core/logging/app.logger';
 import { logAllRoutes } from './core/logging/route.logger';
@@ -56,7 +56,7 @@ async function bootstrap() {
 	app.use(appLogger);
 
 	// Apply global exception filter for custom error responses
-	app.useGlobalFilters(new HttpExceptionFilter());
+	app.useGlobalFilters(new GlobalExceptionFilter());
 
 	// Apply global response interceptor for consistent response format
 	app.useGlobalInterceptors(new ApiResponseInterceptor());
@@ -74,7 +74,7 @@ async function bootstrap() {
 	displayStartupInfo(port);
 
 	// Log all routes (only in development mode)
-	logAllRoutes(app, {
+	await logAllRoutes(app, {
 		saveToFile: true,
 		logToConsole: false,
 	});

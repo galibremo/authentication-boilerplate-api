@@ -1,11 +1,11 @@
-import { randomInt } from 'crypto';
 import type { ConfigService } from '@nestjs/config';
+import { randomInt } from 'crypto';
 import type { CookieOptions } from 'express';
 import type { EnvType } from '../validators/env';
 import { sessionTimeout } from './constant.helper';
 
 interface SameSiteCookieConfig {
-	sameSite: CookieOptions['sameSite'];
+	sameSite: 'strict' | 'lax' | 'none';
 	secure: boolean;
 	domain?: string;
 }
@@ -28,14 +28,14 @@ export const AppHelpers = {
 	 * @returns The generated OTP.
 	 * @throws An error if the length is less than 4.
 	 */
-	OTPGenerator(length: number = 4): number {
+	OTPGenerator(length: number = 4): string {
 		if (length < 4) {
 			throw new Error('The OTP length must be at least 4.');
 		}
 
 		const min = Math.pow(10, length - 1);
 		const max = Math.pow(10, length) - 1;
-		return randomInt(min, max + 1);
+		return String(randomInt(min, max + 1));
 	},
 
 	/**
@@ -54,7 +54,7 @@ export const AppHelpers = {
 	 * @returns The SameSite and secure settings for cookies.
 	 */
 	sameSiteCookieConfig(configService: ConfigService<EnvType, true>): SameSiteCookieConfig {
-		const sameSite = configService.get<CookieOptions['sameSite']>('COOKIE_SAME_SITE', 'lax');
+		const sameSite = configService.get('COOKIE_SAME_SITE', { infer: true });
 		const secure = configService.get<string>('COOKIE_SECURE') === 'true';
 		const domain = configService.get<string>('COOKIE_DOMAIN');
 

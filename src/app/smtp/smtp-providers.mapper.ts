@@ -6,10 +6,10 @@ const SENSITIVE_FIELDS = ['apiKey', 'secretAccessKey', 'pass'] as const;
 const MASKED_VALUE = '••••••••';
 
 export function mapToResponse(provider: SmtpProviderSchemaType): SmtpProviderResponse {
-	const config =
+	const config: Record<string, unknown> =
 		typeof provider.config === 'string'
-			? JSON.parse(provider.config)
-			: (provider.config as Record<string, unknown>);
+			? (JSON.parse(provider.config) as Record<string, unknown>)
+			: (provider.config);
 
 	return {
 		id: provider.publicId,

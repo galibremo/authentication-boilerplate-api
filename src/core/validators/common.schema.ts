@@ -196,7 +196,7 @@ const baseUnion = <T extends readonly [z.ZodTypeAny, ...z.ZodTypeAny[]]>(
 // =======================
 export const validateString = baseString;
 export const validateNumber = baseNumber;
-export const validatePositiveNumber = (name: string) =>
+export const validatePositiveInteger = (name: string) =>
 	baseNumber(name, { min: 1, positive: true, int: true });
 export const validateBoolean = baseBoolean;
 export const validateEnum = baseEnum;
@@ -285,14 +285,9 @@ export const validateUUID = (name: string) => baseUUID(name);
 // 		.transform(value => value.trim());
 
 export const validatePhoneNumber = (name = 'Phone') =>
-	baseString(name)
+	baseString(name, { min: 1 })
 		.trim()
 		.superRefine((val, ctx) => {
-			// allow empty if you want optional phone; otherwise remove this
-			if (!val) return;
-
-			// Best practice: require international format by default
-			// Example: +8801712345678, +14155552671
 			const phone = parsePhoneNumberFromString(val);
 
 			if (!phone || !phone.isValid()) {
@@ -302,20 +297,15 @@ export const validatePhoneNumber = (name = 'Phone') =>
 				});
 				return;
 			}
-
-			// Enforce E.164 output (canonical)
-			// If you want to require the user input itself to start with '+', uncomment:
-			// if (!val.startsWith("+")) { ...issue... }
-
-			// Optionally normalize elsewhere:
-			// const e164 = phone.number; // "+14155552671"
 		});
 
 export const validateUsernameOrEmail = baseString('Username or email', { min: 1, max: 255 }).refine(
 	value => {
-		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 		const usernameRegex = /^[a-zA-Z0-9_]*$/;
-		if (value.includes('@')) return emailRegex.test(value);
+		if (value.includes('@')) {
+			const emailResult = z.email().safeParse(value);
+			return emailResult.success;
+		}
 		return usernameRegex.test(value) && value.length <= 20;
 	},
 	{ error: zodMessages.error.invalid.invalidUsernameOrEmail('Username or email') },
@@ -351,5 +341,5 @@ export const metaSeoSchema = z.object({
 	metaTitle: baseString('Meta Title', { max: 255 }).optional(),
 	metaDescription: baseString('Meta Description', { max: 500 }).optional(),
 	metaKeywords: baseString('Meta Keywords').optional(),
-	metaThumbnailId: validatePositiveNumber('Meta Thumbnail ID').optional(),
+	metaThumbnailId: validatePositiveInteger('Meta Thumbnail ID').optional(),
 });

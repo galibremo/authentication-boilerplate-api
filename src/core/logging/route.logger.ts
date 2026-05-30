@@ -1,7 +1,7 @@
 import { INestApplication, RequestMethod } from '@nestjs/common';
 import { METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
 import { DiscoveryService, MetadataScanner } from '@nestjs/core';
-import { writeFileSync } from 'fs';
+import { writeFile } from 'fs/promises';
 import { join } from 'path';
 
 interface RouteInfo {
@@ -97,7 +97,7 @@ export function logRoutesToConsole(routes: RouteInfo[]): void {
 /**
  * Saves routes to a JSON file
  */
-export function saveRoutesToFile(routes: RouteInfo[], filePath?: string): void {
+export async function saveRoutesToFile(routes: RouteInfo[], filePath?: string): Promise<void> {
 	const outputPath = filePath || join(process.cwd(), 'routes.json');
 
 	const routesByMethod: Record<string, string[]> = {};
@@ -116,22 +116,22 @@ export function saveRoutesToFile(routes: RouteInfo[], filePath?: string): void {
 		routesByMethod,
 	};
 
-	writeFileSync(outputPath, JSON.stringify(output, null, 2));
-	console.log(`✅ Routes saved to: ${outputPath}\n`);
+	await writeFile(outputPath, JSON.stringify(output, null, 2));
+	console.log(`Routes saved to: ${outputPath}\n`);
 }
 
 /**
  * Main function to log all routes during application startup
  * Only runs in development mode
  */
-export function logAllRoutes(
+export async function logAllRoutes(
 	app: INestApplication,
 	options?: {
 		saveToFile?: boolean;
 		filePath?: string;
 		logToConsole?: boolean;
 	},
-): void {
+): Promise<void> {
 	const isDevelopment = process.env.NODE_ENV !== 'production';
 
 	if (!isDevelopment) {
@@ -145,7 +145,7 @@ export function logAllRoutes(
 
 		if (routes.length === 0) {
 			console.warn(
-				'⚠️  No routes found. Routes may not be registered yet or the Express adapter is not accessible.',
+				'No routes found. Routes may not be registered yet or the Express adapter is not accessible.',
 			);
 			console.warn('    Try calling logAllRoutes() after app.init() or in a lifecycle hook.');
 			return;
@@ -156,9 +156,9 @@ export function logAllRoutes(
 		}
 
 		if (saveToFile) {
-			saveRoutesToFile(routes, filePath);
+			await saveRoutesToFile(routes, filePath);
 		}
 	} catch (error) {
-		console.error('❌ Error logging routes:', error);
+		console.error('Error logging routes:', error);
 	}
 }

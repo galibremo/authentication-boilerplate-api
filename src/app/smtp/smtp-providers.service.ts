@@ -210,7 +210,9 @@ export class SmtpProvidersService {
 	): Promise<TestConnectionResult> {
 		const provider = await this.getTargetProvider(publicId);
 
-		const decryptedConfig = JSON.parse(this.cryptoService.decrypt(provider.config));
+		const decryptedConfig = JSON.parse(
+			this.cryptoService.decrypt(provider.config),
+		) as Record<string, unknown>;
 		const emailProvider = this.providers.get(provider.providerType);
 
 		if (!emailProvider) {
@@ -259,7 +261,9 @@ export class SmtpProvidersService {
 	}
 
 	private toResponse(provider: SmtpProviderSchemaType) {
-		const decryptedConfig = JSON.parse(this.cryptoService.decrypt(provider.config));
+		const decryptedConfig = JSON.parse(
+			this.cryptoService.decrypt(provider.config),
+		) as Record<string, unknown>;
 
 		return {
 			id: provider.publicId,
