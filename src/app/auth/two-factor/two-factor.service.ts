@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
 import { generateSecret, type CryptoPlugin } from '@otplib/core';
 import { base32 } from '@otplib/plugin-base32-scure';
 import { verifySync } from '@otplib/totp';
 import { generateTOTP } from '@otplib/uri';
+import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
 import QRCode from 'qrcode';
 
 import {
@@ -15,9 +15,9 @@ import {
 import { EnvType } from '../../../core/validators/env';
 import { CryptoService } from '../../../crypto/crypto.service';
 import type { SessionSchemaType, UserSchemaType } from '../../../database/types';
+import { AuthService } from '../core/auth.service';
 import type { UserWithoutPassword } from '../core/auth.types';
 import { SessionService } from '../session/session.service';
-import { AuthService } from '../core/auth.service';
 
 import { TwoFactorRepository } from './two-factor.repository';
 import type {
@@ -333,7 +333,7 @@ export class TwoFactorService {
 
 	private getIssuer(): string {
 		try {
-			return new URL(this.configService.get('APP_URL', { infer: true })).host;
+			return new URL(this.configService.get('APP_NAME', { infer: true })).host;
 		} catch {
 			return 'Boilerplate';
 		}

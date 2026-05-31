@@ -22,6 +22,7 @@ const coreEnvSchema = z.object({
 	ORIGIN_URL: validateString('ORIGIN_URL'),
 	API_URL: validateString('API_URL'),
 	APP_URL: validateString('APP_URL'),
+	APP_NAME: validateString('APP_NAME'),
 });
 
 const integrationFlagsSchema = z.object({
