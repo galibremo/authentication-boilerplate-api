@@ -35,8 +35,8 @@ import { EnvType } from '../../core/validators/env';
 import { SECURITY_STORE_TOKEN, type ISecurityStore } from '../../core/security-store';
 import { FILE_SIZE_LIMIT, singleFileSchema, ZodFileValidationPipe } from '../media/media.pipe';
 import { AuditLogService } from '../audit-log/audit-log.service';
-import type { UserWithoutPassword, UserWithoutPasswordResponse } from './core/auth.types';
-import { mapUserResponse } from './core/auth.mapper';
+import type { UserWithoutPassword, UserWithoutPasswordResponse } from './auth.types';
+import { mapUserResponse } from './auth.mapper';
 import {
 	type GoogleLoginDto,
 	googleLoginSchema,
@@ -46,7 +46,7 @@ import {
 	magicLinkVerifySchema,
 	type UpdateProfileDto,
 	updateProfileSchema,
-} from './core/auth.schema';
+} from './schemas/auth.schema';
 import {
 	type PasswordLoginDto,
 	passwordLoginSchema,
@@ -54,8 +54,8 @@ import {
 	setPasswordSchema,
 	type ChangePasswordDto,
 	changePasswordSchema,
-} from './core/password.schema';
-import { AuthService } from './core/auth.service';
+} from './schemas/password.schema';
+import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { TwoFaRequiredGuard } from './guards/two-fa-required.guard';
 import { PartialJwtAuthGuard } from './guards/partial-jwt-auth.guard';

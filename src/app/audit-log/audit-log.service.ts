@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import type { Request } from 'express';
 
 import type { RoleTypeEnum } from '../../core/database/types';
-import type { UserWithoutPassword } from '../auth/core/auth.types';
+import type { UserWithoutPassword } from '../auth/auth.types';
 import { type AuditLogFilterOptionsResponse, type AuditLogListResponse, mapAuditLogResponse } from './audit-log.mapper';
 import { AuditLogRepository } from './audit-log.repository';
 import type { AuditLogListQueryDto } from './audit-log.schema';

@@ -20,7 +20,7 @@ import { memoryStorage } from 'multer';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ApiResponse, createApiResponse } from '../../common/interceptors/api-response.interceptor';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
-import type { UserWithoutPassword } from '../auth/core/auth.types';
+import type { UserWithoutPassword } from '../auth/auth.types';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { MediaResponseType } from './media.types';
 import { FILE_SIZE_LIMIT, singleFileSchema, ZodFileValidationPipe } from './media.pipe';

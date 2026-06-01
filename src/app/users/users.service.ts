@@ -8,7 +8,7 @@ import {
 	notFoundError,
 } from '../../core/errors/domain-error';
 import type { UserSchemaType } from '../../core/database/types';
-import type { UserWithoutPassword } from '../auth/core/auth.types';
+import type { UserWithoutPassword } from '../auth/auth.types';
 import { ApprovalEmailService } from '../auth/services/approval-email.service';
 import { InvitationEmailService } from '../auth/services/invitation-email.service';
 import { TwoFactorAlertEmailService } from '../auth/services/two-factor-alert-email.service';

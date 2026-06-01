@@ -1,4 +1,4 @@
-import type { UserSchemaType } from '../../../core/database/types';
+import type { UserSchemaType } from '../../core/database/types';
 
 export type UserWithoutPassword = Omit<UserSchemaType, 'password' | 'twoFactorSecretEncrypted'> & {
 	hasPassword: boolean;

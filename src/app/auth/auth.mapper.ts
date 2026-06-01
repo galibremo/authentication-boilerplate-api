@@ -1,4 +1,4 @@
-import type { UserSchemaType } from '../../../core/database/types';
+import type { UserSchemaType } from '../../core/database/types';
 import type { UserWithoutPassword, UserWithoutPasswordResponse } from './auth.types';
 
 export function stripUserPassword(user: UserSchemaType): UserWithoutPassword {

@@ -4,7 +4,7 @@ import type { Request } from 'express';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { badGatewayError, notFoundError } from '../../core/errors/domain-error';
 import type { SmtpProviderSchemaType } from '../../core/database/types';
-import type { UserWithoutPassword } from '../auth/core/auth.types';
+import type { UserWithoutPassword } from '../auth/auth.types';
 import { CryptoService } from '../../core/crypto/crypto.service';
 import { BrevoProvider } from './providers/brevo.provider';
 import { ResendProvider } from './providers/resend.provider';

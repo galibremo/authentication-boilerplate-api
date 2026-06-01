@@ -11,20 +11,20 @@ import {
 	badRequestError,
 	notFoundError,
 	unauthorizedError,
-} from '../../../core/errors/domain-error';
-import { magicLinkTimeout, sessionTimeout } from '../../../common/helpers/constant.helper';
-import { EnvType } from '../../../core/validators/env';
-import { CryptoService } from '../../../core/crypto/crypto.service';
-import { AuditLogService } from '../../audit-log/audit-log.service';
-import { CloudinaryImageService } from '../../media/cloudinary.service';
-import { SystemService } from '../../system/system.service';
-import { MagicLinkEmailService } from '../services/magic-link-email.service';
-import { WelcomeEmailService } from '../services/welcome-email.service';
-import { SessionService } from '../session/session.service';
+} from '../../core/errors/domain-error';
+import { magicLinkTimeout, sessionTimeout } from '../../common/helpers/constant.helper';
+import { EnvType } from '../../core/validators/env';
+import { CryptoService } from '../../core/crypto/crypto.service';
+import { AuditLogService } from '../audit-log/audit-log.service';
+import { CloudinaryImageService } from '../media/cloudinary.service';
+import { SystemService } from '../system/system.service';
+import { MagicLinkEmailService } from './services/magic-link-email.service';
+import { WelcomeEmailService } from './services/welcome-email.service';
+import { SessionService } from './session/session.service';
 import { stripUserPassword } from './auth.mapper';
 import { AUTH_CLOUDINARY_SERVICE } from './auth.providers';
 import { AuthRepository, type AuthDbClient } from './auth.repository';
-import type { LoginDto, UpdateProfileDto } from './auth.schema';
+import type { LoginDto, UpdateProfileDto } from './schemas/auth.schema';
 import type {
 	CreateUser,
 	DashboardAccessRestriction,

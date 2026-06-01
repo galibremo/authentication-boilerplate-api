@@ -62,9 +62,6 @@ You must continuously analyze file counts within feature modules (`src/app/[feat
   ever allowed inside individual feature folders.
 - **ORM Obliteration:** Hide Drizzle query mechanics behind clean repositories. Name files directly
   after their business domain: `auth.repository.ts`, **never** `auth.drizzle.repository.ts`.
-- **Interface Decoupling:** Core services must only access data providers via abstract repository
-  interfaces (`[domain].repository.interface.ts`). Direct injection of the Drizzle database client
-  into a service is a critical rule violation.
 
 ### 4. Code-First System Actions
 

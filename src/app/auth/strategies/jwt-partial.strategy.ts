@@ -9,7 +9,7 @@ import { AppHelpers } from '../../../common/helpers/app.helper';
 import { EnvType } from '../../../core/validators/env';
 import { CryptoService } from '../../../core/crypto/crypto.service';
 import type { SessionSchemaType } from '../../../core/database/types';
-import { AuthService } from '../core/auth.service';
+import { AuthService } from '../auth.service';
 import { SessionService } from '../session/session.service';
 
 interface JwtPayload {

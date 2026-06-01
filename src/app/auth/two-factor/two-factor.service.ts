@@ -15,8 +15,8 @@ import {
 import { EnvType } from '../../../core/validators/env';
 import { CryptoService } from '../../../core/crypto/crypto.service';
 import type { SessionSchemaType, UserSchemaType } from '../../../core/database/types';
-import { AuthService } from '../core/auth.service';
-import type { UserWithoutPassword } from '../core/auth.types';
+import { AuthService } from '../auth.service';
+import type { UserWithoutPassword } from '../auth.types';
 import { SessionService } from '../session/session.service';
 
 import { TwoFactorRepository } from './two-factor.repository';

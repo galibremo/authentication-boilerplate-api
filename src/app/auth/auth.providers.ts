@@ -1,8 +1,8 @@
 import { Provider } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { EnvType } from '../../../core/validators/env';
-import { CloudinaryImageService } from '../../media/cloudinary.service';
+import { EnvType } from '../../core/validators/env';
+import { CloudinaryImageService } from '../media/cloudinary.service';
 
 export const AUTH_CLOUDINARY_SERVICE = Symbol('AUTH_CLOUDINARY_SERVICE');
 

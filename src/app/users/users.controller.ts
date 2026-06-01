@@ -20,7 +20,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { ApiResponse, createApiResponse } from '../../common/interceptors/api-response.interceptor';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
-import type { UserWithoutPassword } from '../auth/core/auth.types';
+import type { UserWithoutPassword } from '../auth/auth.types';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type {
 	DeleteUserResponse,
