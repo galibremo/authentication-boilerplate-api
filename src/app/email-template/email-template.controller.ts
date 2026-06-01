@@ -12,8 +12,8 @@ import type {
 import {
 	type EmailTemplateListQueryDto,
 	emailTemplateListQuerySchema,
-} from './email-template-list.schema';
-import { type UpdateEmailTemplateDto, updateEmailTemplateSchema } from './email-template.schema';
+} from './schemas/email-template-list.schema';
+import { type UpdateEmailTemplateDto, updateEmailTemplateSchema } from './schemas/email-template.schema';
 import { EmailTemplateService } from './email-template.service';
 
 function toResponse(

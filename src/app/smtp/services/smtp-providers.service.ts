@@ -1,27 +1,27 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { Request } from 'express';
 
-import { AuditLogService } from '../audit-log/audit-log.service';
-import { badGatewayError, notFoundError } from '../../core/errors/domain-error';
-import type { SmtpProviderSchemaType } from '../../core/database/types';
-import type { UserWithoutPassword } from '../auth/auth.types';
-import { CryptoService } from '../../core/crypto/crypto.service';
-import { BrevoProvider } from './providers/brevo.provider';
-import { ResendProvider } from './providers/resend.provider';
-import { NodemailerProvider } from './providers/nodemailer.provider';
-import { AwsSesProvider } from './providers/aws-ses.provider';
+import { AuditLogService } from '../../audit-log/audit-log.service';
+import { badGatewayError, notFoundError } from '../../../core/errors/domain-error';
+import type { SmtpProviderSchemaType } from '../../../core/database/types';
+import type { UserWithoutPassword } from '../../auth/auth.types';
+import { CryptoService } from '../../../core/crypto/crypto.service';
+import { BrevoProvider } from '../providers/brevo.provider';
+import { ResendProvider } from '../providers/resend.provider';
+import { NodemailerProvider } from '../providers/nodemailer.provider';
+import { AwsSesProvider } from '../providers/aws-ses.provider';
 import type {
 	EmailProvider,
 	EmailProviderType,
 	TestConnectionResult,
-} from './email-provider.interface';
-import { SmtpProvidersRepository } from './smtp-providers.repository';
-import { SmtpProvidersPolicy } from './smtp-providers.policy';
+} from '../email-provider.interface';
+import { SmtpProvidersRepository } from '../smtp-providers.repository';
+import { SmtpProvidersPolicy } from '../smtp-providers.policy';
 import type {
 	CreateSmtpProviderDto,
 	SmtpProvidersListQueryDto,
 	UpdateSmtpProviderDto,
-} from './smtp-providers.schema';
+} from '../smtp-providers.schema';
 
 @Injectable()
 export class SmtpProvidersService {

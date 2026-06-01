@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { validateString } from '../../core/validators/common.schema';
+import { validateString } from '../../../core/validators/common.schema';
 
 export const updateEmailTemplateSchema = z
 	.object({

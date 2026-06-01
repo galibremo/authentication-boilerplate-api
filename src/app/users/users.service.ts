@@ -9,9 +9,9 @@ import {
 } from '../../core/errors/domain-error';
 import type { UserSchemaType } from '../../core/database/types';
 import type { UserWithoutPassword } from '../auth/auth.types';
-import { ApprovalEmailService } from '../auth/services/approval-email.service';
-import { InvitationEmailService } from '../auth/services/invitation-email.service';
-import { TwoFactorAlertEmailService } from '../auth/services/two-factor-alert-email.service';
+import { ApprovalEmail } from '../auth/emails/approval.email';
+import { InvitationEmail } from '../auth/emails/invitation.email';
+import { TwoFactorAlertEmail } from '../auth/emails/two-factor-alert.email';
 import { TwoFactorService } from '../auth/two-factor/two-factor.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import type {
@@ -37,9 +37,9 @@ export class UsersService {
 		private readonly usersRepository: UsersRepository,
 		private readonly twoFactorService: TwoFactorService,
 		private readonly auditLogService: AuditLogService,
-		private readonly invitationEmailService: InvitationEmailService,
-		private readonly approvalEmailService: ApprovalEmailService,
-		private readonly twoFactorAlertEmailService: TwoFactorAlertEmailService,
+		private readonly invitationEmail: InvitationEmail,
+		private readonly approvalEmail: ApprovalEmail,
+		private readonly twoFactorAlertEmail: TwoFactorAlertEmail,
 	) {}
 
 	async listUsers(query: UsersListQueryDto): Promise<UserListResponse> {
@@ -89,7 +89,7 @@ export class UsersService {
 
 			const user = await this.getManagementResponse(createdUser.id);
 
-			await this.invitationEmailService.sendInvitationEmail({
+			await this.invitationEmail.send({
 				email: user.email,
 				name: user.name,
 				role: user.role,
@@ -145,7 +145,7 @@ export class UsersService {
 			const user = await this.getManagementResponse(targetUser.id);
 
 			if (!targetUser.isApproved && user.isApproved) {
-				await this.approvalEmailService.sendApprovalEmail({
+				await this.approvalEmail.send({
 					email: user.email,
 					name: user.name,
 					approvedByName: currentUser.name,
@@ -278,7 +278,7 @@ export class UsersService {
 			},
 			request,
 		});
-		await this.twoFactorAlertEmailService.sendTwoFactorAlertEmail({
+		await this.twoFactorAlertEmail.send({
 			email: targetUser.email,
 			name: targetUser.name,
 			event: 'reset',

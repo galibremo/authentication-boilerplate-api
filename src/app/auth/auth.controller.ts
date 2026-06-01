@@ -55,13 +55,14 @@ import {
 	type ChangePasswordDto,
 	changePasswordSchema,
 } from './schemas/password.schema';
+import { AuthPolicy } from './auth.policy';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { TwoFaRequiredGuard } from './guards/two-fa-required.guard';
 import { PartialJwtAuthGuard } from './guards/partial-jwt-auth.guard';
 import { mapSessionResponse } from './session/session.mapper';
 import { SessionService } from './session/session.service';
-import { TwoFactorAlertEmailService } from './services/two-factor-alert-email.service';
+import { TwoFactorAlertEmail } from './emails/two-factor-alert.email';
 import { type SessionListQueryDto, sessionListQuerySchema } from './session/session.schema';
 import type { SessionListResponse, SessionResponse } from './session/session.types';
 import { TwoFactorService } from './two-factor/two-factor.service';
@@ -79,10 +80,11 @@ import type { PartialAuthRequest } from './strategies/jwt-partial.strategy';
 export class AuthController {
 	constructor(
 		private readonly authService: AuthService,
+		private readonly authPolicy: AuthPolicy,
 		private readonly sessionService: SessionService,
 		private readonly twoFactorService: TwoFactorService,
 		private readonly auditLogService: AuditLogService,
-		private readonly twoFactorAlertEmailService: TwoFactorAlertEmailService,
+		private readonly twoFactorAlertEmail: TwoFactorAlertEmail,
 		private readonly configService: ConfigService<EnvType, true>,
 		@Inject(SECURITY_STORE_TOKEN)
 		private readonly securityStore: ISecurityStore,
@@ -153,7 +155,7 @@ export class AuthController {
 				this.authService.getMagicLinkRedirectUrl(verifyDto.redirectUrl ?? verifyDto.redirect),
 			);
 		} catch (error) {
-			const restriction = this.authService.getDashboardAccessRestrictionFromError(error);
+			const restriction = this.authPolicy.getDashboardAccessRestrictionFromError(error);
 
 			if (!restriction) throw error;
 
@@ -165,7 +167,7 @@ export class AuthController {
 				'requires-2fa',
 				AppHelpers.requires2faClearCookieConfig(this.configService),
 			);
-			response.redirect(this.authService.getDashboardAccessRestrictionLoginUrl(restriction));
+			response.redirect(this.authPolicy.getDashboardAccessRestrictionLoginUrl(restriction));
 		}
 	}
 
@@ -289,7 +291,7 @@ export class AuthController {
 			},
 			request,
 		});
-		await this.twoFactorAlertEmailService.sendTwoFactorAlertEmail({
+		await this.twoFactorAlertEmail.send({
 			email: user.email,
 			name: user.name,
 			event: 'enabled',
@@ -361,7 +363,7 @@ export class AuthController {
 				},
 				request,
 			});
-			await this.twoFactorAlertEmailService.sendTwoFactorAlertEmail({
+			await this.twoFactorAlertEmail.send({
 				email: user.email,
 				name: user.name,
 				event: 'disabled',
@@ -541,7 +543,7 @@ export class AuthController {
 			const user = await this.authService.validateUser(loginDto);
 			const userDeviceInfo = this.sessionService.getSessionInfo(request);
 
-			await this.authService.assertCanAccessDashboard(user);
+			await this.authPolicy.assertCanAccessDashboard(user);
 
 			const accessToken = await this.authService.generateAccessToken({
 				userId: user.id,
@@ -670,7 +672,7 @@ export class AuthController {
 			const user = await this.authService.findOrCreateGoogleUser(googleProfile);
 			const userDeviceInfo = this.sessionService.getSessionInfo(request);
 
-			await this.authService.assertCanAccessDashboard(user);
+			await this.authPolicy.assertCanAccessDashboard(user);
 
 			const accessToken = await this.authService.generateAccessToken({
 				userId: user.id,

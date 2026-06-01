@@ -30,7 +30,7 @@ import {
 	type MediaListQueryDto,
 	mediaListQuerySchema,
 } from './media.schema';
-import { MediaService } from './media.service';
+import { MediaService } from './services/media.service';
 
 @Controller('media')
 export class MediaController {

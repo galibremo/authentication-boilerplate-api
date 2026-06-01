@@ -34,7 +34,7 @@ import {
 	type UpdateSmtpProviderDto,
 	updateSmtpProviderSchema,
 } from './smtp-providers.schema';
-import { SmtpProvidersService } from './smtp-providers.service';
+import { SmtpProvidersService } from './services/smtp-providers.service';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN')

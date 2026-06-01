@@ -9,14 +9,15 @@ import { AuditLogModule } from '../audit-log/audit-log.module';
 import { SmtpModule } from '../smtp/smtp.module';
 import { SystemModule } from '../system/system.module';
 import { AuthController } from './auth.controller';
+import { AuthPolicy } from './auth.policy';
 import { AUTH_CLOUDINARY_SERVICE, authCloudinaryProvider } from './auth.providers';
 import { AuthRepository } from './auth.repository';
 import { AuthService } from './auth.service';
-import { ApprovalEmailService } from './services/approval-email.service';
-import { InvitationEmailService } from './services/invitation-email.service';
-import { MagicLinkEmailService } from './services/magic-link-email.service';
-import { TwoFactorAlertEmailService } from './services/two-factor-alert-email.service';
-import { WelcomeEmailService } from './services/welcome-email.service';
+import { ApprovalEmail } from './emails/approval.email';
+import { InvitationEmail } from './emails/invitation.email';
+import { MagicLinkEmail } from './emails/magic-link.email';
+import { TwoFactorAlertEmail } from './emails/two-factor-alert.email';
+import { WelcomeEmail } from './emails/welcome.email';
 import { SessionRepository } from './session/session.repository';
 import { SessionService } from './session/session.service';
 import { JwtPartialStrategy } from './strategies/jwt-partial.strategy';
@@ -41,6 +42,7 @@ import { TwoFactorService } from './two-factor/two-factor.service';
 	],
 	providers: [
 		AuthService,
+		AuthPolicy,
 		AuthRepository,
 		JwtStrategy,
 		JwtPartialStrategy,
@@ -48,20 +50,20 @@ import { TwoFactorService } from './two-factor/two-factor.service';
 		SessionRepository,
 		TwoFactorService,
 		TwoFactorRepository,
-		ApprovalEmailService,
-		InvitationEmailService,
-		MagicLinkEmailService,
-		TwoFactorAlertEmailService,
-		WelcomeEmailService,
+		ApprovalEmail,
+		InvitationEmail,
+		MagicLinkEmail,
+		TwoFactorAlertEmail,
+		WelcomeEmail,
 		authCloudinaryProvider,
 	],
 	controllers: [AuthController],
 	exports: [
 		AuthService,
 		TwoFactorService,
-		ApprovalEmailService,
-		InvitationEmailService,
-		TwoFactorAlertEmailService,
+		ApprovalEmail,
+		InvitationEmail,
+		TwoFactorAlertEmail,
 		AUTH_CLOUDINARY_SERVICE,
 	],
 })

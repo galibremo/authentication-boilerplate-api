@@ -1,13 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { notFoundError, unprocessableError } from '../../core/errors/domain-error';
-import { PaginatedResponse } from '../../common/interceptors/api-response.interceptor';
-import type { MediaDataType, MediaResponseType } from './media.types';
-import { mapMediaDeleteResponse, mapMediaResponse, mapUploadToMediaData } from './media.mapper';
-import { MEDIA_CLOUDINARY_SERVICE } from './media.providers';
-import { MediaPolicy } from './media.policy';
-import { MediaRepository } from './media.repository';
-import { type MediaDto, type MediaListQueryDto } from './media.schema';
+import { notFoundError, unprocessableError } from '../../../core/errors/domain-error';
+import { PaginatedResponse } from '../../../common/interceptors/api-response.interceptor';
+import type { MediaDataType, MediaResponseType } from '../media.types';
+import { mapMediaDeleteResponse, mapMediaResponse, mapUploadToMediaData } from '../media.mapper';
+import { MEDIA_CLOUDINARY_SERVICE } from '../media.providers';
+import { MediaPolicy } from '../media.policy';
+import { MediaRepository } from '../media.repository';
+import { type MediaDto, type MediaListQueryDto } from '../media.schema';
 import { CloudinaryImageService } from './cloudinary.service';
 
 @Injectable()

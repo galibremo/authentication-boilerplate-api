@@ -2,7 +2,7 @@ import { Provider } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { EnvType } from '../../core/validators/env';
-import { CloudinaryImageService } from './cloudinary.service';
+import { CloudinaryImageService } from './services/cloudinary.service';
 
 export const MEDIA_CLOUDINARY_SERVICE = Symbol('MEDIA_CLOUDINARY_SERVICE');
 

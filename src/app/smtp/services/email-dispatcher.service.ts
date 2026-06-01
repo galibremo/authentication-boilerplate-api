@@ -1,16 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { badGatewayError } from '../../core/errors/domain-error';
-import { CryptoService } from '../../core/crypto/crypto.service';
-import type { SmtpProviderSchemaType } from '../../core/database/types';
-import type { TemplateKey, TemplateVariableMap } from '../email-template/email-template.registry';
-import { EmailTemplateService } from '../email-template/email-template.service';
-import { EmailLogsService } from '../email-logs/email-logs.service';
-import type { EmailProvider, SendEmailParams } from './email-provider.interface';
-import { AwsSesProvider } from './providers/aws-ses.provider';
-import { BrevoProvider } from './providers/brevo.provider';
-import { NodemailerProvider } from './providers/nodemailer.provider';
-import { ResendProvider } from './providers/resend.provider';
+import { badGatewayError } from '../../../core/errors/domain-error';
+import { CryptoService } from '../../../core/crypto/crypto.service';
+import type { SmtpProviderSchemaType } from '../../../core/database/types';
+import type { TemplateKey, TemplateVariableMap } from '../../email-template/email-template.registry';
+import { EmailTemplateService } from '../../email-template/email-template.service';
+import { EmailLogsService } from '../../email-logs/email-logs.service';
+import type { EmailProvider, SendEmailParams } from '../email-provider.interface';
+import { AwsSesProvider } from '../providers/aws-ses.provider';
+import { BrevoProvider } from '../providers/brevo.provider';
+import { NodemailerProvider } from '../providers/nodemailer.provider';
+import { ResendProvider } from '../providers/resend.provider';
 import { SmtpProvidersService } from './smtp-providers.service';
 
 @Injectable()

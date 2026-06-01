@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import { baseQuerySchema, type SortableField } from '../../core/validators/base-query.schema';
-import { validateEnum } from '../../core/validators/common.schema';
+import { baseQuerySchema, type SortableField } from '../../../core/validators/base-query.schema';
+import { validateEnum } from '../../../core/validators/common.schema';
 
 const EMAIL_TEMPLATE_SORTABLE_FIELDS: readonly SortableField[] = [
 	{ name: 'key', queryName: 'key' },

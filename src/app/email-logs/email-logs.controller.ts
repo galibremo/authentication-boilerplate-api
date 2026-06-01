@@ -16,7 +16,7 @@ import { badGatewayError, notFoundError } from '../../core/errors/domain-error';
 import { ApiResponse, createApiResponse } from '../../common/interceptors/api-response.interceptor';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { EmailDispatcherService } from '../smtp/email-dispatcher.service';
+import { EmailDispatcherService } from '../smtp/services/email-dispatcher.service';
 import { SmtpProvidersRepository } from '../smtp/smtp-providers.repository';
 import type { EmailLogListResponse, EmailLogResponse } from './email-log.types';
 import {

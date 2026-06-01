@@ -8,6 +8,7 @@ import { twoFactorRequiredError, unauthorizedError } from '../../../core/errors/
 import { AppHelpers } from '../../../common/helpers/app.helper';
 import { EnvType } from '../../../core/validators/env';
 import { CryptoService } from '../../../core/crypto/crypto.service';
+import { AuthPolicy } from '../auth.policy';
 import { AuthService } from '../auth.service';
 import { SessionService } from '../session/session.service';
 
@@ -21,6 +22,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 	constructor(
 		private readonly configService: ConfigService<EnvType, true>,
 		private readonly authService: AuthService,
+		private readonly authPolicy: AuthPolicy,
 		private readonly sessionService: SessionService,
 		private readonly cryptoService: CryptoService,
 	) {
@@ -52,7 +54,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
 		if (!user.emailVerified) throw unauthorizedError('Email not verified');
 
-		await this.authService.assertCanAccessDashboard(user);
+		await this.authPolicy.assertCanAccessDashboard(user);
 
 		// Check if the user session is valid
 		const session = await this.sessionService.validateSession(user.id, jwtToken);

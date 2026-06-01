@@ -5,10 +5,10 @@ import { DatabaseModule } from '../../core/database/database.module';
 import { AuditLogModule } from '../audit-log/audit-log.module';
 import { EmailTemplateModule } from '../email-template/email-template.module';
 import { EmailLogsModule } from '../email-logs/email-logs.module';
-import { EmailDispatcherService } from './email-dispatcher.service';
+import { EmailDispatcherService } from './services/email-dispatcher.service';
 import { SmtpProvidersController } from './smtp-providers.controller';
 import { SmtpProvidersRepository } from './smtp-providers.repository';
-import { SmtpProvidersService } from './smtp-providers.service';
+import { SmtpProvidersService } from './services/smtp-providers.service';
 
 @Module({
 	imports: [DatabaseModule, CryptoModule, EmailTemplateModule, AuditLogModule, forwardRef(() => EmailLogsModule)],

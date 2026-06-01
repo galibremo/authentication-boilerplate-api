@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { MediaController } from './media.controller';
 import { MEDIA_CLOUDINARY_SERVICE, mediaCloudinaryProvider } from './media.providers';
 import { MediaRepository } from './media.repository';
-import { MediaService } from './media.service';
+import { MediaService } from './services/media.service';
 
 @Module({
 	controllers: [MediaController],
