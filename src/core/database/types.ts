@@ -14,11 +14,13 @@ import { securityCache } from './schema/security-store.schema';
 import { emailLogs } from './schema/email-log.schema';
 import { smtpProviders } from './schema/smtp-provider.schema';
 import { systemSettings } from './schema/system.schema';
+import { apiKeys } from './schema/api-keys.schema';
 
 /**
  * Schema Types
  */
 export type UserSchemaType = InferSelectModel<typeof users>;
+export type ApiKeySchemaType = InferSelectModel<typeof apiKeys>;
 export type AccountSchemaType = InferSelectModel<typeof accounts>;
 export type SessionSchemaType = InferSelectModel<typeof sessions>;
 export type TwoFactorSetupSchemaType = InferSelectModel<typeof twoFactorSetups>;

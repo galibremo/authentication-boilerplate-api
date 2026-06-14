@@ -17,6 +17,7 @@ import { validateEnv } from './core/validators/env';
 import { CryptoModule } from './core/crypto/crypto.module';
 import { DatabaseModule } from './core/database/database.module';
 import { SecurityStoreModule } from './core/security-store/security-store.module';
+import { ApiKeysModule } from './app/api-keys/api-keys.module';
 
 @Module({
 	imports: [
@@ -52,6 +53,7 @@ import { SecurityStoreModule } from './core/security-store/security-store.module
 		SmtpModule,
 		HealthModule,
 		StatusModule,
+		ApiKeysModule,
 	],
 	providers: [
 		{
