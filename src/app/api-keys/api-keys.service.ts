@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Request } from 'express';
+import { randomBytes } from 'crypto';
 
 import { notFoundError } from '../../core/errors/domain-error';
 import type { ApiKeyResponse, ApiKeysListResponse, DeleteApiKeyResponse } from './api-keys.types';
@@ -28,9 +28,11 @@ export class ApiKeysService {
 	}
 
 	async createApiKey(data: CreateApiKeyDto): Promise<ApiKeyResponse> {
+		const key = this.generateApiKey();
+
 		const createdApiKey = await this.apiKeysRepository.createApiKey({
 			name: data.name,
-			key: data.key,
+			key,
 		});
 
 		if (!createdApiKey) throw notFoundError('api_key_not_created', 'Failed to create API key');
@@ -43,7 +45,6 @@ export class ApiKeysService {
 
 		await this.apiKeysRepository.updateApiKey(targetApiKey.id, {
 			...(Object.prototype.hasOwnProperty.call(data, 'name') ? { name: data.name } : {}),
-			...(Object.prototype.hasOwnProperty.call(data, 'key') ? { key: data.key } : {}),
 		});
 
 		return this.getManagementResponse(targetApiKey.id);
@@ -71,5 +72,9 @@ export class ApiKeysService {
 		if (!apiKey) throw notFoundError('api_key_not_found', 'API key not found');
 
 		return mapApiKeysManagementResponse(apiKey);
+	}
+
+	private generateApiKey(): string {
+		return `ak_${randomBytes(32).toString('hex')}`;
 	}
 }

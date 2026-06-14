@@ -17,18 +17,16 @@ export const apiKeysListQuerySchema = baseQuerySchema(APIKEY_SORTABLE_FIELDS);
 export const createApiKeySchema = z
 	.object({
 		name: validateString('Name'),
-		key: validateString('Key'),
 	})
 	.strict();
 
 export const updateApiKeySchema = z
 	.object({
 		name: validateString('Name'),
-		key: validateString('Key'),
 	})
 	.strict()
 	.refine(data => Object.keys(data).length > 0, {
-		message: 'At least one user field must be provided',
+		message: 'At least one API key field must be provided',
 	});
 
 export type ApiKeysListQueryDto = z.infer<typeof apiKeysListQuerySchema>;
