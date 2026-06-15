@@ -54,7 +54,8 @@ export class ApiKeysController {
 		@Request() request: ExpressRequest,
 		@Body(new ZodValidationPipe(createApiKeySchema)) body: CreateApiKeyDto,
 	): Promise<ApiResponse<ApiKeyResponse>> {
-		const apiKey = await this.apiKeysService.createApiKey(body);
+		const userId = (request.user as unknown as { id: number }).id;
+		const apiKey = await this.apiKeysService.createApiKey(body, userId);
 
 		return createApiResponse(HttpStatus.CREATED, 'ApiKey created successfully', apiKey);
 	}

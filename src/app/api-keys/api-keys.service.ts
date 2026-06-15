@@ -1,15 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { randomBytes } from 'crypto';
 
 import { notFoundError } from '../../core/errors/domain-error';
 import type { ApiKeyResponse, ApiKeysListResponse, DeleteApiKeyResponse } from './api-keys.types';
 import { mapApiKeysManagementResponse } from './api-keys.mapper';
 import type { CreateApiKeyDto, UpdateApiKeyDto, ApiKeysListQueryDto } from './api-keys.schema';
 import { ApiKeysRepository } from './api-keys.repository';
+import { CryptoService } from '../../core/crypto/crypto.service';
 
 @Injectable()
 export class ApiKeysService {
-	constructor(private readonly apiKeysRepository: ApiKeysRepository) {}
+	constructor(
+		private readonly apiKeysRepository: ApiKeysRepository,
+		private readonly cryptoService: CryptoService,
+	) {}
 
 	async listApiKeys(query: ApiKeysListQueryDto): Promise<ApiKeysListResponse> {
 		const apiKeys = await this.apiKeysRepository.listApiKeys(query);
@@ -27,8 +30,8 @@ export class ApiKeysService {
 		return this.getManagementResponse(targetApiKey.id);
 	}
 
-	async createApiKey(data: CreateApiKeyDto): Promise<ApiKeyResponse> {
-		const key = this.generateApiKey();
+	async createApiKey(data: CreateApiKeyDto, userId: number): Promise<ApiKeyResponse> {
+		const key = this.generateApiKey(userId); // ← pass userId
 
 		const createdApiKey = await this.apiKeysRepository.createApiKey({
 			name: data.name,
@@ -74,7 +77,11 @@ export class ApiKeysService {
 		return mapApiKeysManagementResponse(apiKey);
 	}
 
-	private generateApiKey(): string {
-		return `ak_${randomBytes(32).toString('hex')}`;
+	private generateApiKey(userId: number): string {
+		const payload = `${userId}:${Date.now()}`;
+		const encrypted = this.cryptoService.encrypt(payload);
+		const urlSafe = encrypted.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+
+		return `ak_${urlSafe}`;
 	}
 }
