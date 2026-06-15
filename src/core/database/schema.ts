@@ -6,6 +6,7 @@ import * as AuthSchema from './schema/auth.schema';
 import * as EmailLogSchema from './schema/email-log.schema';
 import * as EmailTemplateSchema from './schema/email-template.schema';
 import * as EnumSchema from './schema/enum.schema';
+import * as KnowledgeBaseSchema from './schema/knowledge-base.schema';
 import * as MediaSchema from './schema/media.schema';
 import * as N8nSchema from './schema/n8n.schema';
 import * as RelationSchema from './schema/relation.schema';
@@ -20,6 +21,7 @@ const schema = {
 	...EmailLogSchema,
 	...EmailTemplateSchema,
 	...EnumSchema,
+	...KnowledgeBaseSchema,
 	...MediaSchema,
 	...N8nSchema,
 	...RelationSchema,

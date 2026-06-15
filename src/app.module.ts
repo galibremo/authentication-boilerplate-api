@@ -19,6 +19,7 @@ import { DatabaseModule } from './core/database/database.module';
 import { SecurityStoreModule } from './core/security-store/security-store.module';
 import { ApiKeysModule } from './app/api-keys/api-keys.module';
 import { N8nModule } from './app/n8n/n8n.module';
+import { KnowledgeBaseModule } from './app/knowledge-base/knowledge-base.module';
 
 @Module({
 	imports: [
@@ -56,6 +57,7 @@ import { N8nModule } from './app/n8n/n8n.module';
 		StatusModule,
 		ApiKeysModule,
 		N8nModule,
+		KnowledgeBaseModule,
 	],
 	providers: [
 		{
