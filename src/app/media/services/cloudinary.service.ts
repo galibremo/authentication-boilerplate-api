@@ -27,6 +27,8 @@ interface UploadOptions {
 	invalidate?: boolean;
 }
 
+type RawUploadOptions = Omit<UploadOptions, 'transformation'>;
+
 // Upload result interface
 export interface UploadResult {
 	success: boolean;
@@ -100,6 +102,30 @@ export class CloudinaryImageService {
 		return new Promise(resolve => {
 			const uploadStream = cloudinary.uploader.upload_stream(
 				this.buildUploadOptions(options),
+				(error: UploadApiErrorResponse | undefined, result: UploadApiResponse | undefined) => {
+					if (error || !result) {
+						resolve({
+							success: false,
+							error: error?.message || 'Upload failed',
+						});
+					} else {
+						resolve({
+							success: true,
+							data: result,
+						});
+					}
+				},
+			);
+
+			const readable = Readable.from(buffer);
+			readable.pipe(uploadStream);
+		});
+	}
+
+	async uploadRawFromBuffer(buffer: Buffer, options?: RawUploadOptions): Promise<UploadResult> {
+		return new Promise(resolve => {
+			const uploadStream = cloudinary.uploader.upload_stream(
+				this.buildRawUploadOptions(options),
 				(error: UploadApiErrorResponse | undefined, result: UploadApiResponse | undefined) => {
 					if (error || !result) {
 						resolve({
@@ -284,14 +310,42 @@ export class CloudinaryImageService {
 		return defaultOptions;
 	}
 
+	private buildRawUploadOptions(options?: RawUploadOptions): Record<string, unknown> {
+		const defaultOptions: Record<string, unknown> = {
+			folder: options?.folder || this.config.folder || 'uploads',
+			resource_type: 'raw' as const,
+			overwrite: options?.overwrite ?? false,
+			invalidate: options?.invalidate ?? false,
+			unique_filename: true,
+			use_filename: true,
+		};
+
+		if (options?.publicId) {
+			defaultOptions['public_id'] = options.publicId;
+		}
+
+		if (options?.tags && options.tags.length > 0) {
+			defaultOptions['tags'] = options.tags;
+		}
+
+		if (options?.context) {
+			defaultOptions['context'] = options.context;
+		}
+
+		return defaultOptions;
+	}
+
 	/**
 	 * Delete image from Cloudinary
 	 * @param publicId - Public ID of the image to delete
 	 * @returns Deletion result
 	 */
-	async deleteMedia(publicId: string): Promise<{ success: boolean; error?: string }> {
+	async deleteMedia(
+		publicId: string,
+		resourceType: 'image' | 'raw' = 'image',
+	): Promise<{ success: boolean; error?: string }> {
 		try {
-			await cloudinary.uploader.destroy(publicId);
+			await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
 			return { success: true };
 		} catch (error) {
 			return {

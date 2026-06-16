@@ -2,8 +2,14 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import { notFoundError, unprocessableError } from '../../../core/errors/domain-error';
 import { PaginatedResponse } from '../../../common/interceptors/api-response.interceptor';
+import type { MediaSchemaType } from '../../../core/database/types';
 import type { MediaDataType, MediaResponseType } from '../media.types';
-import { mapMediaDeleteResponse, mapMediaResponse, mapUploadToMediaData } from '../media.mapper';
+import {
+	mapDocumentUploadToMediaData,
+	mapMediaDeleteResponse,
+	mapMediaResponse,
+	mapUploadToMediaData,
+} from '../media.mapper';
 import { MEDIA_CLOUDINARY_SERVICE } from '../media.providers';
 import { MediaPolicy } from '../media.policy';
 import { MediaRepository } from '../media.repository';
@@ -30,13 +36,37 @@ export class MediaService {
 		return this.uploadMedia(mapUploadToMediaData(file, result.data, userId));
 	}
 
+	async uploadDocumentFile(userId: number, file: Express.Multer.File): Promise<MediaSchemaType> {
+		await this.restrictMediaUpload(userId);
+
+		const result = await this.cloudinaryImageService.uploadRawFromBuffer(file.buffer, {
+			tags: ['n8n-upload', 'document'],
+			context: {
+				originalFilename: file.originalname,
+				mimeType: file.mimetype,
+			},
+		});
+
+		if (!result.success || !result.data) {
+			throw unprocessableError('media_upload_failed', result.error ?? 'Media upload failed');
+		}
+
+		return this.createMedia(mapDocumentUploadToMediaData(file, result.data, userId));
+	}
+
 	async uploadMedia(data: MediaDataType): Promise<boolean> {
+		await this.createMedia(data);
+
+		return true;
+	}
+
+	private async createMedia(data: MediaDataType): Promise<MediaSchemaType> {
 		const createdMedia = await this.mediaRepository.create(data);
 
 		if (!createdMedia)
 			throw unprocessableError('media_create_failed', 'Media could not be created');
 
-		return !!createdMedia;
+		return createdMedia;
 	}
 
 	async getAllMedia(
@@ -87,7 +117,10 @@ export class MediaService {
 		if (!deletedMedia) throw notFoundError('media_not_found', 'Media not found');
 
 		const media = mapMediaDeleteResponse(deletedMedia);
-		await this.cloudinaryImageService.deleteMedia(media.storageKey);
+		await this.cloudinaryImageService.deleteMedia(
+			media.storageKey,
+			media.mediaType === 'document' ? 'raw' : 'image',
+		);
 
 		return true;
 	}

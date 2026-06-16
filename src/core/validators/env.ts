@@ -90,13 +90,9 @@ const securityHeadersSchema = z.object({
 });
 
 const n8nSchema = z.object({
-	N8N_CHAT_WEBHOOK: validateString('N8N_CHAT_WEBHOOK').optional(),
-	N8N_CHAT_WEBHOOK_ID: validateString('N8N_CHAT_WEBHOOK_ID').optional(),
-	N8N_API_URL: validateString('N8N_API_URL').optional(),
-	N8N_FETCH_CHAT_WEBHOOK_ID: validateString('N8N_FETCH_CHAT_WEBHOOK_ID').optional(),
-	N8N_UPLOAD_WEBHOOK_ID: validateString('N8N_UPLOAD_WEBHOOK_ID').optional(),
-	CHROMA_URL: validateString('CHROMA_URL').optional(),
-	N8N_COLLECTION_NAME: validateString('N8N_COLLECTION_NAME').optional(),
+	N8N_WEBHOOK_URL: validateString('N8N_WEBHOOK_URL'),
+	N8N_WEBHOOK_ID: validateString('N8N_WEBHOOK_ID'),
+	CHROMA_URL: validateString('CHROMA_URL'),
 });
 
 const schemas = [

@@ -1,20 +1,23 @@
 import {
 	Body,
 	Controller,
-	Delete,
 	Get,
 	HttpCode,
 	HttpStatus,
 	Post,
 	Query,
 	UploadedFile,
+	UseGuards,
 	UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ApiResponse, createApiResponse } from '../../common/interceptors/api-response.interceptor';
-import { SkipCsrf } from '../csrf/csrf.decorator';
+import type { UserWithoutPassword } from '../auth/auth.types';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { N8N_UPLOAD_FILE_SIZE_LIMIT, N8nUploadFileValidationPipe } from './n8n.pipe';
 import { N8nService } from './n8n.service';
 
 @Controller('n8n')
@@ -40,27 +43,19 @@ export class N8nController {
 	}
 
 	@Post('upload')
+	@UseGuards(JwtAuthGuard)
 	@HttpCode(HttpStatus.OK)
 	@UseInterceptors(
 		FileInterceptor('data', {
 			storage: memoryStorage(),
-			limits: { fileSize: 10 * 1024 * 1024 },
+			limits: { fileSize: N8N_UPLOAD_FILE_SIZE_LIMIT },
 		}),
 	)
 	async upload(
-		@UploadedFile() file: Express.Multer.File,
+		@UploadedFile(new N8nUploadFileValidationPipe()) file: Express.Multer.File,
+		@CurrentUser() user: UserWithoutPassword,
 	): Promise<ApiResponse<Record<string, unknown>>> {
-		const text = file.buffer.toString('utf-8');
-		const data = await this.n8nService.upload(text);
+		const data = await this.n8nService.upload(file, user);
 		return createApiResponse(HttpStatus.OK, 'File uploaded successfully', data);
-	}
-
-	@SkipCsrf()
-	@Delete('clear')
-	@HttpCode(HttpStatus.OK)
-	async clear(): Promise<ApiResponse<{ success: boolean; message: string }>> {
-		const result = await this.n8nService.clearCollection();
-		const statusCode = result.success ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR;
-		return createApiResponse(statusCode, result.message, result);
 	}
 }

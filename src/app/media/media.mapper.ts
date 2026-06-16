@@ -50,6 +50,31 @@ export function mapUploadToMediaData(
 	};
 }
 
+export function mapDocumentUploadToMediaData(
+	file: Express.Multer.File,
+	upload: UploadApiResponse,
+	uploadedBy: number,
+): MediaDataType {
+	return {
+		altText: null,
+		secureUrl: upload.secure_url,
+		filename: file.originalname,
+		mimeType: file.mimetype,
+		fileExtension: file.originalname.split('.').pop() || '',
+		fileSize: file.size,
+		storageKey: upload.public_id,
+		mediaType: 'document',
+		storageMetadata: upload,
+		uploadedBy,
+		caption: null,
+		description: null,
+		tags: upload.tags || [],
+		duration: null,
+		width: null,
+		height: null,
+	};
+}
+
 export function mapMediaResponse(row: MediaResponseRow): MediaResponseType {
 	return row;
 }
