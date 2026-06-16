@@ -8,6 +8,12 @@ export type KnowledgeBaseRow = Pick<
 
 export type KnowledgeBaseResponse = KnowledgeBaseRow;
 
+export type KnowledgeBaseCollectionResponse = {
+	id: string;
+	collectionName: string;
+	displayNameSnapshot: string | null;
+};
+
 export type KnowledgeBaseFileResponse = Omit<MediaResponseType, 'publicId'> & {
 	id: string;
 };

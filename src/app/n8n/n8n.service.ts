@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import type { EnvType } from '../../core/validators/env';
 import type { UserWithoutPassword } from '../auth/auth.types';
+import { KnowledgeBaseService } from '../knowledge-base/knowledge-base.service';
 import { MediaService } from '../media/services/media.service';
 import { N8NRepository } from './n8n.repository';
 
@@ -14,6 +15,7 @@ type N8nFileUploadPayload = {
 	mimeType: string;
 	fileSize: number;
 	secureUrl: string | null;
+	collectionName: string;
 };
 
 @Injectable()
@@ -24,6 +26,7 @@ export class N8nService {
 		private readonly configService: ConfigService<EnvType, true>,
 		private readonly n8nRepository: N8NRepository,
 		private readonly mediaService: MediaService,
+		private readonly knowledgeBaseService: KnowledgeBaseService,
 	) {}
 
 	async chat(chatInput: string, sessionId?: string): Promise<string> {
@@ -61,6 +64,7 @@ export class N8nService {
 		user: UserWithoutPassword,
 	): Promise<Record<string, unknown>> {
 		const media = await this.mediaService.uploadDocumentFile(user.id, file);
+		const collection = await this.knowledgeBaseService.getOrCreateUserCollection(user);
 		const payload: N8nFileUploadPayload = {
 			type: 'file_upload',
 			fileId: media.publicId,
@@ -69,6 +73,7 @@ export class N8nService {
 			mimeType: file.mimetype,
 			fileSize: file.size,
 			secureUrl: media.secureUrl,
+			collectionName: collection.collectionName,
 		};
 		const formData = this.createUploadFormData(file, payload);
 
@@ -86,7 +91,7 @@ export class N8nService {
 			await this.rollbackUploadedMedia(user.id, media.publicId);
 			const message = error instanceof Error ? error.message : String(error);
 			this.logger.error(`N8N Upload Request Error: ${message}`);
-			throw new Error('Upload to N8N failed');
+			throw new Error('Upload to N8N failed', { cause: error });
 		}
 
 		const data: Record<string, unknown> = (await res.json().catch(() => ({}))) as Record<
@@ -130,6 +135,7 @@ export class N8nService {
 		formData.append('mimeType', payload.mimeType);
 		formData.append('fileSize', String(payload.fileSize));
 		formData.append('secureUrl', payload.secureUrl ?? '');
+		formData.append('collectionName', payload.collectionName);
 
 		return formData;
 	}

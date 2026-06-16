@@ -6,7 +6,7 @@ import type { EnvType } from '../../core/validators/env';
 
 type ChromaDeleteInput = {
 	fileId: string;
-	userId: string;
+	collectionName: string;
 };
 
 type ChromaCollection = {
@@ -17,19 +17,19 @@ type ChromaCollection = {
 @Injectable()
 export class ChromaService {
 	private readonly logger = new Logger(ChromaService.name);
-	private collectionId: string | null = null;
+	private readonly collectionIds = new Map<string, string>();
 
 	constructor(private readonly configService: ConfigService<EnvType, true>) {}
 
-	async deleteFileVectors({ fileId, userId }: ChromaDeleteInput): Promise<void> {
-		const collectionId = await this.getCollectionId(fileId);
+	async deleteFileVectors({ fileId, collectionName }: ChromaDeleteInput): Promise<void> {
+		const collectionId = await this.getCollectionId(collectionName, fileId);
 		const url = `${this.getBaseUrl()}/collections/${collectionId}/delete`;
 		const res = await fetch(url, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
 				where: {
-					$and: [{ fileId: { $eq: fileId } }, { userId: { $eq: userId } }],
+					fileId: { $eq: fileId },
 				},
 			}),
 		}).catch(error => {
@@ -38,7 +38,7 @@ export class ChromaService {
 			throw badGatewayError(
 				'chroma_delete_failed',
 				'Could not delete vectors for this file. Please try again.',
-				{ fileId },
+				{ fileId, collectionName },
 			);
 		});
 
@@ -48,15 +48,15 @@ export class ChromaService {
 			throw badGatewayError(
 				'chroma_delete_failed',
 				'Could not delete vectors for this file. Please try again.',
-				{ fileId, status: res.status },
+				{ fileId, collectionName, status: res.status },
 			);
 		}
 	}
 
-	private async getCollectionId(fileId: string): Promise<string> {
-		if (this.collectionId) return this.collectionId;
+	private async getCollectionId(collectionName: string, fileId: string): Promise<string> {
+		const cachedCollectionId = this.collectionIds.get(collectionName);
+		if (cachedCollectionId) return cachedCollectionId;
 
-		const collectionName = this.configService.get('CHROMA_COLLECTION_NAME', { infer: true });
 		const url = `${this.getBaseUrl()}/collections`;
 		const res = await fetch(url).catch(error => {
 			const message = error instanceof Error ? error.message : String(error);
@@ -64,7 +64,7 @@ export class ChromaService {
 			throw badGatewayError(
 				'chroma_collection_lookup_failed',
 				'Could not find the Chroma collection. Please try again.',
-				{ fileId },
+				{ fileId, collectionName },
 			);
 		});
 
@@ -74,7 +74,7 @@ export class ChromaService {
 			throw badGatewayError(
 				'chroma_collection_lookup_failed',
 				'Could not find the Chroma collection. Please try again.',
-				{ fileId, status: res.status },
+				{ fileId, collectionName, status: res.status },
 			);
 		}
 
@@ -85,21 +85,23 @@ export class ChromaService {
 			this.logger.error(`Chroma collection "${collectionName}" was not found`);
 			throw badGatewayError(
 				'chroma_collection_not_found',
-				'Could not find the Chroma collection. Please check CHROMA_COLLECTION_NAME.',
+				'Could not find the user knowledge base collection. Please upload a file first, then try again.',
 				{ fileId, collectionName },
 			);
 		}
 
-		this.collectionId = collection.id;
+		this.collectionIds.set(collectionName, collection.id);
 		return collection.id;
 	}
 
 	private parseCollections(body: unknown): ChromaCollection[] {
-		if (Array.isArray(body)) return body.filter(this.isChromaCollection);
+		if (Array.isArray(body)) return body.filter(value => this.isChromaCollection(value));
 
 		if (body && typeof body === 'object' && 'collections' in body) {
 			const collections = (body as { collections?: unknown }).collections;
-			if (Array.isArray(collections)) return collections.filter(this.isChromaCollection);
+			if (Array.isArray(collections)) {
+				return collections.filter(value => this.isChromaCollection(value));
+			}
 		}
 
 		return [];

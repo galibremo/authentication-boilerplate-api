@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
+import { KnowledgeBaseModule } from '../knowledge-base/knowledge-base.module';
 import { MediaModule } from '../media/media.module';
 import { N8nController } from './n8n.controller';
 import { N8NRepository } from './n8n.repository';
 import { N8nService } from './n8n.service';
 
 @Module({
-	imports: [MediaModule],
+	imports: [MediaModule, KnowledgeBaseModule],
 	controllers: [N8nController],
 	providers: [N8nService, N8NRepository],
 })

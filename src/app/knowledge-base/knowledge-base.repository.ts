@@ -5,7 +5,10 @@ import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 import { DATABASE_CONNECTION } from '../../core/database/connection';
 import schema from '../../core/database/schema';
-import type { KnowledgeBaseSchemaType } from '../../core/database/types';
+import type {
+	KnowledgeBaseCollectionSchemaType,
+	KnowledgeBaseSchemaType,
+} from '../../core/database/types';
 import type { KnowledgeBaseRow } from './knowledge-base.types';
 
 export type KnowledgeBaseDatabase = NodePgDatabase<typeof schema>;
@@ -38,6 +41,27 @@ export class KnowledgeBaseRepository {
 			.select(this.knowledgeBaseSelection())
 			.from(schema.knowledgeBase)
 			.where(eq(schema.knowledgeBase.owner, userId))
+			.then(rows => rows[0]);
+	}
+
+	async findCollectionByUserId(
+		userId: number,
+	): Promise<KnowledgeBaseCollectionSchemaType | undefined> {
+		return this.db
+			.select()
+			.from(schema.knowledgeBaseCollections)
+			.where(eq(schema.knowledgeBaseCollections.owner, userId))
+			.then(rows => rows[0]);
+	}
+
+	async createCollection(
+		data: typeof schema.knowledgeBaseCollections.$inferInsert,
+	): Promise<KnowledgeBaseCollectionSchemaType | undefined> {
+		return this.db
+			.insert(schema.knowledgeBaseCollections)
+			.values(data)
+			.onConflictDoNothing()
+			.returning()
 			.then(rows => rows[0]);
 	}
 

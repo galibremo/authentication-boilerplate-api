@@ -12,5 +12,6 @@ import { KnowledgeBaseController } from './knowledge-base.controller';
 	imports: [AuthModule, AuditLogModule, MediaModule],
 	controllers: [KnowledgeBaseController],
 	providers: [KnowledgeBaseService, KnowledgeBaseRepository, ChromaService],
+	exports: [KnowledgeBaseService],
 })
 export class KnowledgeBaseModule {}
