@@ -76,10 +76,18 @@ export class N8nService {
 		const webhookId = this.configService.get('N8N_WEBHOOK_ID', { infer: true });
 		const n8nUrl = `${baseUrl}/${webhookId}`;
 
-		const res = await fetch(n8nUrl, {
-			method: 'POST',
-			body: formData,
-		});
+		let res: Response;
+		try {
+			res = await fetch(n8nUrl, {
+				method: 'POST',
+				body: formData,
+			});
+		} catch (error) {
+			await this.rollbackUploadedMedia(user.id, media.publicId);
+			const message = error instanceof Error ? error.message : String(error);
+			this.logger.error(`N8N Upload Request Error: ${message}`);
+			throw new Error('Upload to N8N failed');
+		}
 
 		const data: Record<string, unknown> = (await res.json().catch(() => ({}))) as Record<
 			string,
@@ -88,10 +96,20 @@ export class N8nService {
 
 		if (!res.ok) {
 			this.logger.error(`N8N Upload Error: ${res.status}`);
+			await this.rollbackUploadedMedia(user.id, media.publicId);
 			throw new Error('Upload to N8N failed');
 		}
 
 		return data;
+	}
+
+	private async rollbackUploadedMedia(userId: number, publicId: string): Promise<void> {
+		try {
+			await this.mediaService.deleteMedia(userId, publicId);
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			this.logger.error(`Media rollback failed for ${publicId}: ${message}`);
+		}
 	}
 
 	private createUploadFormData(

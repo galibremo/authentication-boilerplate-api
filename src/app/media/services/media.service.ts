@@ -95,6 +95,43 @@ export class MediaService {
 		};
 	}
 
+	async getDocumentMedia(
+		userId: number,
+		query: MediaListQueryDto,
+	): Promise<PaginatedResponse<MediaResponseType>> {
+		const { rows, total } = await this.mediaRepository.listDocumentsByUserIdPaginated(
+			userId,
+			query,
+		);
+
+		const page = query.page ?? 1;
+		const pageSize = query.pageSize ?? 10;
+		const totalPages = Math.ceil(total / pageSize);
+
+		return {
+			data: rows.map(mapMediaResponse),
+			pagination: {
+				totalItems: total,
+				limit: pageSize,
+				offset: (page - 1) * pageSize,
+				currentPage: page,
+				totalPages,
+				hasPrevPage: page > 1,
+				hasNextPage: page < totalPages,
+				prevPage: page > 1 ? page - 1 : null,
+				nextPage: page < totalPages ? page + 1 : null,
+			},
+		};
+	}
+
+	async getDocumentDeleteRow(userId: number, publicId: string) {
+		const mediaItem = await this.mediaRepository.findDocumentDeleteRowForUser(userId, publicId);
+
+		if (!mediaItem) throw notFoundError('media_not_found', 'Media not found');
+
+		return mapMediaDeleteResponse(mediaItem);
+	}
+
 	async getMediaByPublicId(userId: number, publicId: string): Promise<MediaResponseType> {
 		const mediaItem = await this.mediaRepository.findByPublicIdForUser(userId, publicId);
 

@@ -93,6 +93,9 @@ const n8nSchema = z.object({
 	N8N_WEBHOOK_URL: validateString('N8N_WEBHOOK_URL'),
 	N8N_WEBHOOK_ID: validateString('N8N_WEBHOOK_ID'),
 	CHROMA_URL: validateString('CHROMA_URL'),
+	CHROMA_COLLECTION_NAME: validateString('CHROMA_COLLECTION_NAME').default('office_dataset'),
+	CHROMA_TENANT: validateString('CHROMA_TENANT').default('default_tenant'),
+	CHROMA_DATABASE: validateString('CHROMA_DATABASE').default('default_database'),
 });
 
 const schemas = [

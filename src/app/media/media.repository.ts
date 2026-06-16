@@ -89,11 +89,35 @@ export class MediaRepository {
 		};
 	}
 
+	async listDocumentsByUserIdPaginated(
+		userId: number,
+		query: MediaListQueryDto,
+	): Promise<{ rows: MediaResponseRow[]; total: number }> {
+		return this.listByUserIdPaginated(userId, { ...query, mediaType: 'document' });
+	}
+
 	async findByPublicIdForUser(userId: number, publicId: string): Promise<MediaResponseRow | null> {
 		return this.db
 			.select(this.mediaResponseSelection())
 			.from(schema.media)
 			.where(and(eq(schema.media.publicId, publicId), eq(schema.media.uploadedBy, userId)))
+			.then(rows => rows[0] || null);
+	}
+
+	async findDocumentDeleteRowForUser(
+		userId: number,
+		publicId: string,
+	): Promise<MediaDeleteRow | null> {
+		return this.db
+			.select(this.mediaDeleteSelection())
+			.from(schema.media)
+			.where(
+				and(
+					eq(schema.media.publicId, publicId),
+					eq(schema.media.uploadedBy, userId),
+					eq(schema.media.mediaType, 'document'),
+				),
+			)
 			.then(rows => rows[0] || null);
 	}
 

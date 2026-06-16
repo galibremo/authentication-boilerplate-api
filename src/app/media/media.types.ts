@@ -2,21 +2,21 @@ import { MediaSchemaType } from '../../core/database/types';
 
 export type MediaDataType = Omit<MediaSchemaType, 'id' | 'publicId' | 'createdAt' | 'updatedAt'>;
 
-export type MediaResponseType = Omit<
-	MediaDataType,
-	| 'duration'
+export type MediaResponseType = Pick<
+	MediaSchemaType,
+	| 'publicId'
 	| 'filename'
-	| 'fileExtension'
-	| 'storageMetadata'
-	| 'description'
-	| 'caption'
-	| 'storageKey'
-	| 'uploadedBy'
-> & {
-	createdAt?: Date;
-	updatedAt?: Date;
-};
+	| 'mimeType'
+	| 'fileSize'
+	| 'secureUrl'
+	| 'mediaType'
+	| 'altText'
+	| 'width'
+	| 'height'
+	| 'tags'
+	| 'createdAt'
+	| 'updatedAt'
+>;
 
-export type MediaDeleteResponseType = MediaResponseType & {
-	storageKey: string;
-};
+export type MediaDeleteResponseType = MediaResponseType &
+	Pick<MediaSchemaType, 'storageKey'>;
