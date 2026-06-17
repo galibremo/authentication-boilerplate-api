@@ -115,8 +115,6 @@ export class ChromaService {
 
 	private getBaseUrl(): string {
 		const chromaUrl = this.configService.get('CHROMA_URL', { infer: true }).replace(/\/$/, '');
-		const tenant = this.configService.get('CHROMA_TENANT', { infer: true });
-		const database = this.configService.get('CHROMA_DATABASE', { infer: true });
 
 		return `${chromaUrl}/api/v2/tenants/${tenant}/databases/${database}`;
 	}

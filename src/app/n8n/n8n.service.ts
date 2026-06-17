@@ -31,7 +31,7 @@ export class N8nService {
 
 	async chat(chatInput: string, sessionId?: string): Promise<string> {
 		const baseUrl = this.configService.get('N8N_WEBHOOK_URL', { infer: true });
-		const webhookId = this.configService.get('N8N_WEBHOOK_UPLOAD_ID', { infer: true });
+		const webhookId = this.configService.get('N8N_WEBHOOK_CHAT_ID', { infer: true });
 		const n8nUrl = `${baseUrl}/${webhookId}`;
 
 		const res = await fetch(n8nUrl, {
