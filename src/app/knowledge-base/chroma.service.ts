@@ -14,6 +14,9 @@ type ChromaCollection = {
 	name?: string;
 };
 
+const CHROMA_DEFAULT_TENANT = 'default_tenant';
+const CHROMA_DEFAULT_DATABASE = 'default_database';
+
 @Injectable()
 export class ChromaService {
 	private readonly logger = new Logger(ChromaService.name);
@@ -116,6 +119,6 @@ export class ChromaService {
 	private getBaseUrl(): string {
 		const chromaUrl = this.configService.get('CHROMA_URL', { infer: true }).replace(/\/$/, '');
 
-		return `${chromaUrl}/api/v2/tenants/${tenant}/databases/${database}`;
+		return `${chromaUrl}/api/v2/tenants/${CHROMA_DEFAULT_TENANT}/databases/${CHROMA_DEFAULT_DATABASE}`;
 	}
 }
