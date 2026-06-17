@@ -7,35 +7,7 @@ type MulterFile = Express.Multer.File;
 
 export const N8N_UPLOAD_FILE_SIZE_LIMIT = 10 * 1024 * 1024;
 
-const allowedMimeTypes = new Set([
-	'text/plain',
-	'text/markdown',
-	'text/csv',
-	'text/xml',
-	'text/tab-separated-values',
-	'application/json',
-	'application/ld+json',
-	'application/x-ndjson',
-	'application/xml',
-	'application/pdf',
-	'application/msword',
-	'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-]);
-
-const allowedExtensions = new Set([
-	'txt',
-	'md',
-	'markdown',
-	'csv',
-	'json',
-	'jsonl',
-	'ndjson',
-	'xml',
-	'tsv',
-	'pdf',
-	'doc',
-	'docx',
-]);
+const allowedExtensions = new Set(['txt', 'md', 'csv', 'pdf', 'doc', 'docx']);
 
 function getFileExtension(filename: string): string {
 	return filename.split('.').pop()?.toLowerCase() ?? '';
@@ -52,13 +24,12 @@ export const n8nUploadFileSchema = z
 		}
 
 		const extension = getFileExtension(file.originalname);
-		const isAllowedType =
-			allowedMimeTypes.has(file.mimetype) || allowedExtensions.has(extension);
+		const isAllowedType = allowedExtensions.has(extension);
 
 		if (!isAllowedType) {
 			ctx.addIssue({
 				code: 'custom',
-				message: `Unsupported file type: ${file.mimetype}`,
+				message: `Unsupported file type: ${extension || file.mimetype}`,
 			});
 		}
 
