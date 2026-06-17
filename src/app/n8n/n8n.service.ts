@@ -31,7 +31,7 @@ export class N8nService {
 
 	async chat(chatInput: string, sessionId?: string): Promise<string> {
 		const baseUrl = this.configService.get('N8N_WEBHOOK_URL', { infer: true });
-		const webhookId = this.configService.get('N8N_WEBHOOK_ID', { infer: true });
+		const webhookId = this.configService.get('N8N_WEBHOOK_UPLOAD_ID', { infer: true });
 		const n8nUrl = `${baseUrl}/${webhookId}`;
 
 		const res = await fetch(n8nUrl, {
@@ -78,7 +78,7 @@ export class N8nService {
 		const formData = this.createUploadFormData(file, payload);
 
 		const baseUrl = this.configService.get('N8N_WEBHOOK_URL', { infer: true });
-		const webhookId = this.configService.get('N8N_WEBHOOK_ID', { infer: true });
+		const webhookId = this.configService.get('N8N_WEBHOOK_UPLOAD_ID', { infer: true });
 		const n8nUrl = `${baseUrl}/${webhookId}`;
 
 		let res: Response;
@@ -117,10 +117,7 @@ export class N8nService {
 		}
 	}
 
-	private createUploadFormData(
-		file: Express.Multer.File,
-		payload: N8nFileUploadPayload,
-	): FormData {
+	private createUploadFormData(file: Express.Multer.File, payload: N8nFileUploadPayload): FormData {
 		const formData = new FormData();
 		const fileBytes = Uint8Array.from(file.buffer);
 		const blob = new Blob([fileBytes], {
