@@ -2,6 +2,7 @@ import { relations } from 'drizzle-orm';
 
 import { auditLogs } from './audit-log.schema';
 import { accounts, sessions, twoFactorRecoveryCodes, twoFactorSetups, users } from './auth.schema';
+import { apiKeys } from './api-keys.schema';
 
 export const usersRelations = relations(users, ({ many }) => ({
 	auditLogs: many(auditLogs),
@@ -9,6 +10,14 @@ export const usersRelations = relations(users, ({ many }) => ({
 	sessions: many(sessions),
 	twoFactorSetups: many(twoFactorSetups),
 	twoFactorRecoveryCodes: many(twoFactorRecoveryCodes),
+	apiKeys: many(apiKeys),
+}));
+
+export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
+	user: one(users, {
+		fields: [apiKeys.userId],
+		references: [users.id],
+	}),
 }));
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({

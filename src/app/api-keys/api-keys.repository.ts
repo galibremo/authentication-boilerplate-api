@@ -19,20 +19,20 @@ export class ApiKeysRepository {
 		private readonly db: ApiKeysDatabase,
 	) {}
 
-	findApiKeyByPublicId(publicId: string): Promise<ApiKeySchemaType | undefined> {
+	findApiKeyByPublicId(publicId: string, userId: number): Promise<ApiKeySchemaType | undefined> {
 		return this.db.query.apiKeys.findFirst({
-			where: eq(schema.apiKeys.publicId, publicId),
+			where: and(eq(schema.apiKeys.publicId, publicId), eq(schema.apiKeys.userId, userId)),
 		});
 	}
 
-	async listApiKeys(query: ApiKeysListQueryDto): Promise<{
+	async listApiKeys(query: ApiKeysListQueryDto, userId: number): Promise<{
 		rows: ApiKeysRow[];
 		total: number;
 		page: number;
 		pageSize: number;
 	}> {
 		const now = new Date();
-		const whereClause = this.getListApiKeysWhere(query);
+		const whereClause = this.getListApiKeysWhere(query, userId);
 		const page = query.page ?? 1;
 		const pageSize = query.pageSize ?? 10;
 		const offset = (page - 1) * pageSize;
@@ -76,11 +76,11 @@ export class ApiKeysRepository {
 			.then(rows => rows[0]);
 	}
 
-	async findApiKeyById(apiKeyId: number): Promise<ApiKeysRow | undefined> {
+	async findApiKeyById(apiKeyId: number, userId: number): Promise<ApiKeysRow | undefined> {
 		return this.db
 			.select(this.apiKeysSelection())
 			.from(schema.apiKeys)
-			.where(eq(schema.apiKeys.id, apiKeyId))
+			.where(and(eq(schema.apiKeys.id, apiKeyId), eq(schema.apiKeys.userId, userId)))
 			.groupBy(
 				schema.apiKeys.id,
 				schema.apiKeys.publicId,
@@ -112,7 +112,7 @@ export class ApiKeysRepository {
 			.then(rows => rows[0]);
 	}
 
-	private getListApiKeysWhere(query: ApiKeysListQueryDto): SQL<unknown> | undefined {
+	private getListApiKeysWhere(query: ApiKeysListQueryDto, userId: number): SQL<unknown> {
 		const fromDate = query.fromDate ? new Date(query.fromDate) : undefined;
 		const toDate = query.toDate ? new Date(query.toDate) : undefined;
 
@@ -124,12 +124,13 @@ export class ApiKeysRepository {
 		const searchExists = q ? ilike(schema.apiKeys.name, q) : undefined;
 
 		const conditions = [
+			eq(schema.apiKeys.userId, userId),
 			searchExists,
 			fromDate ? gte(schema.apiKeys.createdAt, fromDate) : undefined,
 			toDate ? lte(schema.apiKeys.createdAt, toDate) : undefined,
 		].filter(Boolean) as SQL<unknown>[];
 
-		return conditions.length > 0 ? and(...conditions) : undefined;
+		return and(...conditions)!;
 	}
 
 	private getApiKeysOrderBy(

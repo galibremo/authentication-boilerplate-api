@@ -35,16 +35,22 @@ export class ApiKeysController {
 
 	@Get()
 	async listApiKeys(
+		@Request() request: ExpressRequest,
 		@Query(new ZodValidationPipe(apiKeysListQuerySchema)) query: ApiKeysListQueryDto,
 	): Promise<ApiResponse<ApiKeysListResponse>> {
-		const apiKeys = await this.apiKeysService.listApiKeys(query);
+		const userId = (request.user as unknown as { id: number }).id;
+		const apiKeys = await this.apiKeysService.listApiKeys(query, userId);
 
 		return createApiResponse(HttpStatus.OK, 'ApiKeys fetched successfully', apiKeys);
 	}
 
 	@Get(':id')
-	async getApiKey(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<ApiKeyResponse>> {
-		const apiKey = await this.apiKeysService.getApiKeyById(id);
+	async getApiKey(
+		@Param('id', ParseUUIDPipe) id: string,
+		@Request() request: ExpressRequest,
+	): Promise<ApiResponse<ApiKeyResponse>> {
+		const userId = (request.user as unknown as { id: number }).id;
+		const apiKey = await this.apiKeysService.getApiKeyById(id, userId);
 
 		return createApiResponse(HttpStatus.OK, 'ApiKey fetched successfully', apiKey);
 	}
@@ -66,7 +72,8 @@ export class ApiKeysController {
 		@Request() request: ExpressRequest,
 		@Body(new ZodValidationPipe(updateApiKeySchema)) body: UpdateApiKeyDto,
 	): Promise<ApiResponse<ApiKeyResponse>> {
-		const apiKey = await this.apiKeysService.updateApiKey(id, body);
+		const userId = (request.user as unknown as { id: number }).id;
+		const apiKey = await this.apiKeysService.updateApiKey(id, body, userId);
 
 		return createApiResponse(HttpStatus.OK, 'ApiKey updated successfully', apiKey);
 	}
@@ -74,8 +81,10 @@ export class ApiKeysController {
 	@Delete(':id')
 	async deleteApiKey(
 		@Param('id', ParseUUIDPipe) id: string,
+		@Request() request: ExpressRequest,
 	): Promise<ApiResponse<DeleteApiKeyResponse>> {
-		const result = await this.apiKeysService.deleteApiKey(id);
+		const userId = (request.user as unknown as { id: number }).id;
+		const result = await this.apiKeysService.deleteApiKey(id, userId);
 
 		return createApiResponse(HttpStatus.OK, 'ApiKey deleted successfully', result);
 	}
